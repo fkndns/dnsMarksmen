@@ -11,18 +11,18 @@ local AllySpawnPos = nil
 
  do
     
-    local Version = 1.3
+    local Version = 1.4
     
     local Files = {
         Lua = {
             Path = SCRIPT_PATH,
             Name = "dnsMarksmen.lua",
-            Url = "https://raw.githubusercontent.com/fkndns/dnsCaitlyn/main/dnsMarksmen.lua"
+            Url = "https://raw.githubusercontent.com/fkndns/dnsMarksmen/main/dnsMarksmen.lua"
         },
         Version = {
             Path = SCRIPT_PATH,
             Name = "dnsMarksmen.version",
-            Url = "https://raw.githubusercontent.com/fkndns/dnsCaitlyn/main/dnsMarksmen.version"    -- check if Raw Adress correct pls.. after you have create the version file on Github
+            Url = "https://raw.githubusercontent.com/fkndns/dnsMarksmen/main/dnsMarksmen.version"    -- check if Raw Adress correct pls.. after you have create the version file on Github
         }
     }
     
@@ -45,7 +45,7 @@ local AllySpawnPos = nil
         local NewVersion = tonumber(ReadFile(Files.Version.Path, Files.Version.Name))
         if NewVersion > Version then
             DownloadFile(Files.Lua.Url, Files.Lua.Path, Files.Lua.Name)
-            print("New dnsCaitlyn Version. Press 2x F6")     -- <-- you can change the massage for users here !!!!
+            print("New dnsMarksmen Version. Press 2x F6")     -- <-- you can change the massage for users here !!!!
         else
             print(Files.Version.Name .. ": No Updates Found")   --  <-- here too
         end
@@ -648,7 +648,7 @@ function Kaisa:Auto()
 	-- enemy loop
 	for i, enemy in pairs(EnemyHeroes) do
 		--w ks
-		local WRange = 3000 + myHero.boundingRadius + enemy.boundingRadius 
+		local WRange = 2000 + myHero.boundingRadius + enemy.boundingRadius 
 		if ValidTarget(enemy, WRange) and self:CanUse(_W, "KS") and self:CastingChecks() and not _G.SDK.Attack:IsActive() then
 			local WDamage = GetWDmg(enemy)
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, WSpellData)
@@ -1469,4 +1469,3 @@ end
 function OnLoad()
     Manager()
 end
-
