@@ -11,7 +11,7 @@ local AllySpawnPos = nil
 
  do
     
-    local Version = 1.2
+    local Version = 1.3
     
     local Files = {
         Lua = {
@@ -918,7 +918,7 @@ function Caitlyn:KS()
 					   rcount = rcount + 1
 				    end
                 end
-		end
+            end
 			RAround = rcount
 			PrintChat(RAround)
 			if RAround == 1 then
@@ -1469,3 +1469,4 @@ end
 function OnLoad()
     Manager()
 end
+
