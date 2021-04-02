@@ -2,10 +2,16 @@ require "PremiumPrediction"
 require "DamageLib"
 require "2DGeometry"
 require "MapPositionGOS"
- 
+
+
+local EnemyHeroes = {}
+local AllyHeroes = {}
+local EnemySpawnPos = nil
+local AllySpawnPos = nil
+
  do
     
-    local Version = 1.0
+    local Version = 1.1
     
     local Files = {
         Lua = {
@@ -49,11 +55,6 @@ require "MapPositionGOS"
     AutoUpdate()
 
 end
-
-local EnemyHeroes = {}
-local AllyHeroes = {}
-local EnemySpawnPos = nil
-local AllySpawnPos = nil
 
 local ItemHotKey = {[ITEM_1] = HK_ITEM_1, [ITEM_2] = HK_ITEM_2,[ITEM_3] = HK_ITEM_3, [ITEM_4] = HK_ITEM_4, [ITEM_5] = HK_ITEM_5, [ITEM_6] = HK_ITEM_6,}
 
@@ -647,7 +648,7 @@ function Kaisa:Auto()
 	-- enemy loop
 	for i, enemy in pairs(EnemyHeroes) do
 		--w ks
-		local WRange = 1400 + myHero.boundingRadius + enemy.boundingRadius 
+		local WRange = 3000 + myHero.boundingRadius + enemy.boundingRadius 
 		if ValidTarget(enemy, WRange) and self:CanUse(_W, "KS") and self:CastingChecks() and not _G.SDK.Attack:IsActive() then
 			local WDamage = GetWDmg(enemy)
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, WSpellData)
@@ -910,12 +911,13 @@ function Caitlyn:KS()
 				rtarget = enemy
 			end
 			local rcount = 0
-			for j, enemy2 in pairs(EnemyHeroes) do
-				local RLine = ClosestPointOnLineSegment(enemy2.pos, myHero.pos, rtarget.pos)
-				if GetDistance(RLine, enemy2.pos) <= 500 then
-					rcount = rcount + 1
-				end
-			end
+            if rtarget ~= nil then
+                for j, enemy2 in pairs(EnemyHeroes) do
+				    local RLine = ClosestPointOnLineSegment(enemy2.pos, myHero.pos, rtarget.pos)
+				    if GetDistance(RLine, enemy2.pos) <= 500 then
+					   rcount = rcount + 1
+				    end
+                end
 			RAround = rcount
 			PrintChat(RAround)
 			if RAround == 1 then
