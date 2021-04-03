@@ -11,7 +11,7 @@ local AllySpawnPos = nil
 
  do
     
-    local Version = 1.4
+    local Version = 1.5
     
     local Files = {
         Lua = {
@@ -1016,7 +1016,7 @@ function Caitlyn:Logic()
 			if pred.CastPos and pred.HitChance > self.Menu.QSpell.QComboHitChance:Value() then
 				Control.CastSpell(HK_Q, pred.CastPos)
 			end
-        elseif self:CanUse(_Q, "Combo") and ValidTarget(target, maxQRange) and Caitlyn:CastingChecks() and not _G.SDK.Attack:IsActive() and (GetBuffDuration(target, "CaitlynEntrapmentMissile") >= 0.5 or GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5) then
+        elseif self:CanUse(_Q, "Combo") and ValidTarget(target, maxQRange) and Caitlyn:CastingChecks() and (GetBuffDuration(target, "CaitlynEntrapmentMissile") >= 0.5 or GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5) then
 			Control.CastSpell(HK_Q, target.pos)
 		end
 		if self:CanUse(_E, "Combo") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() then
@@ -1346,7 +1346,7 @@ function Tristana:Auto()
 		if enemy and ValidTarget(enemy, 250 + myHero.boundingRadius + enemy.boundingRadius) and self:CanUse(_W, "Peel") and IsFacing(enemy) and not IsMyHeroFacing(enemy) and not self:CanUse(_R, "Peel") and self:CastingChecks() and enemy.activeSpell.target == myHero.handle then
 			local Direction = Vector((enemy.pos-myHero.pos):Normalized())
 			local WSpot = myHero.pos - Direction * WRange
-			if not IsUnderEnemyTurret(WSpot) then
+			if not IsUnderEnemyTurret(WSpot) and GetDistance(WSpot, enemy.pos) >= 500 then
 				Control.CastSpell(HK_W, WSpot)
 			end
 		end
