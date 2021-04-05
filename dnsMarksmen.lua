@@ -11,7 +11,7 @@ local AllySpawnPos = nil
 
  do
     
-    local Version = 1.5
+    local Version = 1.6
     
     local Files = {
         Lua = {
@@ -920,7 +920,6 @@ function Caitlyn:KS()
                 end
             end
 			RAround = rcount
-			PrintChat(RAround)
 			if RAround == 1 then
 				if enemy.pos:ToScreen().onScreen then
 					Control.CastSpell(HK_R, enemy.pos)
@@ -940,7 +939,7 @@ function Caitlyn:KS()
 				Control.CastSpell(HK_Q, pred.CastPos)
 			end
 		end
-		if ValidTarget(enemy, WRange) and self:CanUse(_W, "TrapImmo") and self:CastingChecks() and _G.SDK.Attack:IsActive() and (IsImmobile(enemy) > 0.5 or enemy.ms <= enemy.ms * 0.20 or enemy.isImmortal and enemy.ms == 0) and not BuffActive(enemy, "caitlynyordletrapdebuff") then
+		if ValidTarget(enemy, WRange) and self:CanUse(_W, "TrapImmo") and self:CastingChecks() and _G.SDK.Attack:IsActive() and (IsImmobile(enemy) > 0.5 or enemy.ms <= enemy.ms * 0.25) and not BuffActive(enemy, "caitlynyordletrapdebuff") then
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, WSpellData)
 			if pred.CastPos and pred.HitChance >= 1 then
 				Control.CastSpell(HK_W, pred.CastPos)
@@ -949,7 +948,7 @@ function Caitlyn:KS()
 		if ValidTarget(enemy, EPeelRange) and self:CanUse(_E, "NetGap") and self:CastingChecks() and not _G.SDK.Attack:IsActive() and IsFacing(enemy) and not IsMyHeroFacing(enemy) and enemy.activeSpell.target == myHero.handle then
 				Control.CastSpell(HK_E, enemy)
 		end
-		if enemy and ValidTarget(enemy, 1300 + myHero.boundingRadius + enemy.boundingRadius) and (GetBuffDuration(enemy, "CaitlynEntrapmentMissile") >= 0.5 or GetBuffDuration(enemy, "caitlynyordletrapdebuff") > 0.5) then
+		if enemy and ValidTarget(enemy, 1300 + myHero.boundingRadius + enemy.boundingRadius) and (GetBuffDuration(enemy, "CaitlynEntrapmentMissile") > 0 or GetBuffDuration(enemy, "caitlynyordletrapdebuff") > 0) then
 			_G.SDK.Orbwalker.ForceTarget = enemy
 		else
 			_G.SDK.Orbwalker.ForceTarget = nil
@@ -1031,20 +1030,20 @@ function Caitlyn:Logic()
 			end
 		end
 	elseif Mode() == "Harass" and target then
-		if self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetDistance(myHero.pos, target.pos) > minQRange then
+		if self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetDistance(myHero.pos, target.pos) > minQRange and not IsUnderEnemyTurret(myHero) then
             local pred = _G.PremiumPrediction:GetPrediction(myHero, target, QSpellData)
 			if pred.CastPos and pred.HitChance > self.Menu.QSpell.QHarassHitChance:Value() then
 				Control.CastSpell(HK_Q, pred.CastPos)
 			end
-        elseif self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and (GetBuffDuration(target, "CaitlynEntrapmentMissile") >= 0.5 or GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5) then
+        elseif self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and (GetBuffDuration(target, "CaitlynEntrapmentMissile") >= 0.5 or GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5) and not IsUnderEnemyTurret(myHero) then
 			Control.CastSpell(HK_Q, target.pos)
 		end
-		if self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() then
+		if self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and not IsUnderEnemyTurret(myHero) then
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, target, ESpellData)
 			if pred.CastPos and pred.HitChance > self.Menu.ESpell.EHarassHitChanceHitChance:Value() then 
 				Control.CastSpell(HK_E, pred.CastPos)
 			end
-		elseif self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5 then
+		elseif self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5 and not IsUnderEnemyTurret(myHero) then
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, target, ESpellData)
 			if pred.CastPos and pred.HitChance > 0.5 then
 				Control.CastSpell(HK_E, pred.CastPos)
@@ -1344,18 +1343,28 @@ function Tristana:Auto()
 		end
 		-- w Disengage
 		if enemy and ValidTarget(enemy, 250 + myHero.boundingRadius + enemy.boundingRadius) and self:CanUse(_W, "Peel") and IsFacing(enemy) and not IsMyHeroFacing(enemy) and not self:CanUse(_R, "Peel") and self:CastingChecks() and enemy.activeSpell.target == myHero.handle then
-			local Direction = Vector((enemy.pos-myHero.pos):Normalized())
-			local WSpot = myHero.pos - Direction * WRange
-			if not IsUnderEnemyTurret(WSpot) and GetDistance(WSpot, enemy.pos) >= 500 then
-				Control.CastSpell(HK_W, WSpot)
-			end
-		end
+            local RadAngle1 = 90 * math.pi / 180
+            local RadAngle2 = 270 * math.pi / 180
+            local Direction = Vector((enemy.pos-myHero.pos):Normalized())
+            local DirectionLeft = Vector(Direction:Rotated(0, RadAngle1, 0))
+            local DirectionRight = Vector(Direction:Rotated(0, RadAngle2, 0))
+			local WSpot1 = myHero.pos - Direction * WRange
+            local WSpot2 = myHero.pos - DirectionLeft * WRange
+            local WSpot3 = myHero.pos - DirectionRight * WRange
+			if not IsUnderEnemyTurret(WSpot1) and GetDistance(WSpot1, enemy.pos) >= 500 then
+				Control.CastSpell(HK_W, WSpot1)
+			elseif not IsUnderEnemyTurret(WSpot2) and GetDistance(WSpot2, enemy.pos) >= 500 then
+                Control.CastSpell(HK_W, WSpot2)
+            elseif not IsUnderEnemyTurret(WSpot3) and GetDistance(WSpot3, enemy.pos) >= 500 then
+                Control.CastSpell(HK_W, WSpot3)
+            end
+ 		end
 		-- r peel
 		if enemy and ValidTarget(enemy, 250 + myHero.boundingRadius + enemy.boundingRadius) and self:CanUse(_R, "Peel") and IsFacing(enemy) and not IsMyHeroFacing(enemy) and self:CastingChecks() and enemy.activeSpell.target == myHero.handle then
 			Control.CastSpell(HK_R, enemy)
 		end
 		-- force target
-		if enemy and ValidTarget(enemy, AAERRange) and GetBuffDuration(enemy, "tristanaechargesound") >= 0.5 then
+		if enemy and ValidTarget(enemy, AAERRange) and GetBuffDuration(enemy, "tristanaechargesound") > 0 then
 			_G.SDK.Orbwalker.ForceTarget = enemy
 		else
 			_G.SDK.Orbwalker.ForceTarget = nil
