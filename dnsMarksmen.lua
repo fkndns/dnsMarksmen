@@ -8,7 +8,7 @@ local EnemyHeroes = {}
 local AllyHeroes = {}
 local EnemySpawnPos = nil
 local AllySpawnPos = nil
-
+--[[ AutoUpdate deactivated until proper rank
  do
     
     local Version = 1.6
@@ -55,7 +55,7 @@ local AllySpawnPos = nil
     AutoUpdate()
 
 end
-
+--]] 
 local ItemHotKey = {[ITEM_1] = HK_ITEM_1, [ITEM_2] = HK_ITEM_2,[ITEM_3] = HK_ITEM_3, [ITEM_4] = HK_ITEM_4, [ITEM_5] = HK_ITEM_5, [ITEM_6] = HK_ITEM_6,}
 
 local function GetInventorySlotItem(itemID)
