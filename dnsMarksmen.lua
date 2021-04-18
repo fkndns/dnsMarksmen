@@ -8,7 +8,7 @@ local EnemyHeroes = {}
 local AllyHeroes = {}
 local EnemySpawnPos = nil
 local AllySpawnPos = nil
---[[ AutoUpdate deactivated until proper rank
+--[[ AutoUpdate disabled until proper rank
  do
     
     local Version = 1.6
@@ -55,7 +55,7 @@ local AllySpawnPos = nil
     AutoUpdate()
 
 end
---]] 
+--]]
 local ItemHotKey = {[ITEM_1] = HK_ITEM_1, [ITEM_2] = HK_ITEM_2,[ITEM_3] = HK_ITEM_3, [ITEM_4] = HK_ITEM_4, [ITEM_5] = HK_ITEM_5, [ITEM_6] = HK_ITEM_6,}
 
 local function GetInventorySlotItem(itemID)
@@ -445,6 +445,7 @@ end
 function Manager:LoadKaisa()
 	Kaisa:Spells()
 	Kaisa:Menu()
+    
 	Callback.Add("Tick", function() Kaisa:Tick() end)
 	Callback.Add("Draw", function() Kaisa:Draws() end)
 	if _G.SDK then
@@ -939,7 +940,7 @@ function Caitlyn:KS()
 				Control.CastSpell(HK_Q, pred.CastPos)
 			end
 		end
-		if ValidTarget(enemy, WRange) and self:CanUse(_W, "TrapImmo") and self:CastingChecks() and _G.SDK.Attack:IsActive() and (IsImmobile(enemy) > 0.5 or enemy.ms <= enemy.ms * 0.25) and not BuffActive(enemy, "caitlynyordletrapdebuff") then
+		if ValidTarget(enemy, WRange) and self:CanUse(_W, "TrapImmo") and self:CastingChecks() and not _G.SDK.Attack:IsActive() and (IsImmobile(enemy) > 0.5 or enemy.ms <= enemy.ms * 0.25) and not BuffActive(enemy, "caitlynyordletrapdebuff") then
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, WSpellData)
 			if pred.CastPos and pred.HitChance >= 1 then
 				Control.CastSpell(HK_W, pred.CastPos)
@@ -1181,8 +1182,6 @@ function Tristana:Menu()
 	self.Menu.laneclear:MenuElement({id = "qlaneclearcount", name = "Q LaneClear Minions", value = 6, min = 1, max = 9, step = 1})
 	self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "Q LaneClear Mana", value = 60, min = 5, max = 95, step = 5, identifier = "%"})
 -- auto 
-	self.Menu.auto:MenuElement({id = "wdodge", name = "Use W Disengage", value = true})
-	self.Menu.auto:MenuElement({id = "wdodgehp", name = "If HP is lower then", value = 35, min = 5, max = 95, step = 5, identifier = "%"})
 	self.Menu.auto:MenuElement({id = "rks", name = "Use R to KS", value = true})
 	self.Menu.auto:MenuElement({id = "wrks", name = "Use W + R to KS", value = true})
 	self.Menu.auto:MenuElement({id = "wrksspace", name = "To Use WRKS, normal RKS needs to be ticked", type = SPACE})
@@ -1275,9 +1274,6 @@ function Tristana:CanUse(spell, mode)
 			return true
 		end
 	elseif spell == _W then
-		if mode == "Peel" and IsReady(_W) and self.Menu.auto.wdodge:Value() and HPPercent <= self.Menu.auto.wdodgehp:Value() / 100 then
-			return true
-		end
 		if mode == "WRKS" and IsReady(_W) and self.Menu.auto.wrks:Value() then
 			return true
 		end
@@ -1341,24 +1337,6 @@ function Tristana:Auto()
 				Control.CastSpell(HK_W, WSpot)
 			end
 		end
-		-- w Disengage
-		if enemy and ValidTarget(enemy, 250 + myHero.boundingRadius + enemy.boundingRadius) and self:CanUse(_W, "Peel") and IsFacing(enemy) and not IsMyHeroFacing(enemy) and not self:CanUse(_R, "Peel") and self:CastingChecks() and enemy.activeSpell.target == myHero.handle then
-            local RadAngle1 = 90 * math.pi / 180
-            local RadAngle2 = 270 * math.pi / 180
-            local Direction = Vector((enemy.pos-myHero.pos):Normalized())
-            local DirectionLeft = Vector(Direction:Rotated(0, RadAngle1, 0))
-            local DirectionRight = Vector(Direction:Rotated(0, RadAngle2, 0))
-			local WSpot1 = myHero.pos - Direction * WRange
-            local WSpot2 = myHero.pos - DirectionLeft * WRange
-            local WSpot3 = myHero.pos - DirectionRight * WRange
-			if not IsUnderEnemyTurret(WSpot1) and GetDistance(WSpot1, enemy.pos) >= 500 then
-				Control.CastSpell(HK_W, WSpot1)
-			elseif not IsUnderEnemyTurret(WSpot2) and GetDistance(WSpot2, enemy.pos) >= 500 then
-                Control.CastSpell(HK_W, WSpot2)
-            elseif not IsUnderEnemyTurret(WSpot3) and GetDistance(WSpot3, enemy.pos) >= 500 then
-                Control.CastSpell(HK_W, WSpot3)
-            end
- 		end
 		-- r peel
 		if enemy and ValidTarget(enemy, 250 + myHero.boundingRadius + enemy.boundingRadius) and self:CanUse(_R, "Peel") and IsFacing(enemy) and not IsMyHeroFacing(enemy) and self:CastingChecks() and enemy.activeSpell.target == myHero.handle then
 			Control.CastSpell(HK_R, enemy)
