@@ -487,53 +487,56 @@ class "Kaisa"
 
 local EnemyLoaded = false
 local MinionsAround = count
-
-
+local KaisaImg = "https://www.proguides.com/public/media/rlocal/champion/thumbnail/145.png"
+local KaisaQImg = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/KaisaQ.png"
+local KaisaWImg = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/KaisaW.png"
+local KaisaEImg = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/KaisaE.png"
+local KaisaRImg = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/KaisaR.png"
 
 function Kaisa:Menu()
 -- menu
-	self.Menu = MenuElement({type = MENU, id = "Kaisa", name = "dnsKai'Sa"})
+	self.Menu = MenuElement({type = MENU, id = "Kaisa", name = "dnsKai'Sa", leftIcon = KaisaImg})
 -- q spell
-	self.Menu:MenuElement({id = "QSpell", name = "Q", type = MENU})
-	self.Menu.QSpell:MenuElement({id = "QCombo", name = "Combo", value = true})
+	self.Menu:MenuElement({id = "QSpell", name = "Q", type = MENU, leftIcon = KaisaQImg})
+	self.Menu.QSpell:MenuElement({id = "QCombo", name = "Combo", value = true, leftIcon = KaisaQImg})
 	self.Menu.QSpell:MenuElement({id = "QSpace1", name = "", type = SPACE})
-	self.Menu.QSpell:MenuElement({id = "QHarass", name = "Harass", value = false})
-	self.Menu.QSpell:MenuElement({id = "QHarassMana", name = "Harass Mana %", value = 40, min = 0, max = 100, identifier = "%"})
+	self.Menu.QSpell:MenuElement({id = "QHarass", name = "Harass", value = false, leftIcon = KaisaQImg})
+	self.Menu.QSpell:MenuElement({id = "QHarassMana", name = "Harass Mana %", value = 40, min = 0, max = 100, identifier = "%", leftIcon = KaisaQImg})
 	self.Menu.QSpell:MenuElement({id = "QSpace2", name = "", type = SPACE})
-	self.Menu.QSpell:MenuElement({id = "QLaneClear", name = "LaneClear", value = true})
-	self.Menu.QSpell:MenuElement({id = "QLaneClearCount", name = "LaneClear when Q can hit atleast", value = 4, min = 1, max = 9, step = 1})
-	self.Menu.QSpell:MenuElement({id = "QLaneClearMana", name = "LaneClear Mana %", value = 60, min = 0, max = 100, identifier = "%"})
+	self.Menu.QSpell:MenuElement({id = "QLaneClear", name = "LaneClear", value = true, leftIcon = KaisaQImg})
+	self.Menu.QSpell:MenuElement({id = "QLaneClearCount", name = "LaneClear when Q can hit atleast", value = 4, min = 1, max = 9, step = 1, leftIcon = KaisaQImg})
+	self.Menu.QSpell:MenuElement({id = "QLaneClearMana", name = "LaneClear Mana %", value = 60, min = 0, max = 100, identifier = "%", leftIcon = KaisaQImg})
 	self.Menu.QSpell:MenuElement({id = "QSpace3", name = "", type = SPACE})
 -- w spell
-	self.Menu:MenuElement({id = "WSpell", name = "W", type = MENU})
-	self.Menu.WSpell:MenuElement({id = "WCombo", name = "Combo", value = true})
+	self.Menu:MenuElement({id = "WSpell", name = "W", type = MENU, leftIcon = KaisaWImg})
+	self.Menu.WSpell:MenuElement({id = "WCombo", name = "Combo", value = true, leftIcon = KaisaWImg})
 	self.Menu.WSpell:MenuElement({id = "WSpace1", name = "", type = SPACE})
-	self.Menu.WSpell:MenuElement({id = "WHarass", name = "Harass", value = false})
-	self.Menu.WSpell:MenuElement({id = "WHarassMana", name = "Harass Mana %", value = 40, min = 0, max = 100, identifier = "%"})
+	self.Menu.WSpell:MenuElement({id = "WHarass", name = "Harass", value = false, leftIcon = KaisaWImg})
+	self.Menu.WSpell:MenuElement({id = "WHarassMana", name = "Harass Mana %", value = 40, min = 0, max = 100, identifier = "%", leftIcon = KaisaWImg})
 	self.Menu.WSpell:MenuElement({id = "WSpace2", name = "", type = SPACE})
-	self.Menu.WSpell:MenuElement({id = "WLastHit", name = "LastHit Cannon when out of AA Range", value = true})
+	self.Menu.WSpell:MenuElement({id = "WLastHit", name = "LastHit Cannon when out of AA Range", value = true, leftIcon = KaisaWImg})
 	self.Menu.WSpell:MenuElement({id = "WSpace3", name = "", type = SPACE})
-	self.Menu.WSpell:MenuElement({id = "WKS", name = "KS", value = true})
+	self.Menu.WSpell:MenuElement({id = "WKS", name = "KS", value = true, leftIcon = KaisaWImg})
 	self.Menu.WSpell:MenuElement({id = "WSpace4", name = "", type = SPACE})
 -- e spell 
-	self.Menu:MenuElement({id = "ESpell", name = "E", type = MENU})
-	self.Menu.ESpell:MenuElement({id = "ECombo", name = "Combo", value = true})
+	self.Menu:MenuElement({id = "ESpell", name = "E", type = MENU, leftIcon = KaisaEImg})
+	self.Menu.ESpell:MenuElement({id = "ECombo", name = "Combo", value = true, leftIcon = KaisaEImg})
 	self.Menu.ESpell:MenuElement({id = "ESpace1", name = "", type = SPACE})
-	self.Menu.ESpell:MenuElement({id = "EFlee", name = "Flee", value = true})
+	self.Menu.ESpell:MenuElement({id = "EFlee", name = "Flee", value = true, leftIcon = KaisaEImg})
 	self.Menu.ESpell:MenuElement({id = "ESpace2", name = "", type = SPACE})
-	self.Menu.ESpell:MenuElement({id = "EPeel", name = "Autopeel Meeledivers", value = true})
+	self.Menu.ESpell:MenuElement({id = "EPeel", name = "Autopeel Meeledivers", value = true, leftIcon = KaisaEImg})
 	self.Menu.ESpell:MenuElement({id = "ESpace3", name = "", type = SPACE})
 -- r spell
-	self.Menu:MenuElement({id = "RSpell", name = "R", type = MENU})
-	self.Menu.RSpell:MenuElement({id = "Sorry", name = "R is an automatical thingy", type = SPACE})
-	self.Menu.RSpell:MenuElement({id = "Sorry2", name = "I'm really sorry", type = SPACE})
+	self.Menu:MenuElement({id = "RSpell", name = "R", type = MENU, leftIcon = KaisaRImg})
+	self.Menu.RSpell:MenuElement({id = "Sorry", name = "R is an automatical thingy", type = SPACE, leftIcon = KaisaRImg})
+	self.Menu.RSpell:MenuElement({id = "Sorry2", name = "I'm really sorry", type = SPACE, leftIcon = KaisaRImg})
 -- draws
 	self.Menu:MenuElement({id = "Draws", name = "Draws", type = MENU})
 	self.Menu.Draws:MenuElement({id = "EnableDraws", name = "Enable", value = false})
 	self.Menu.Draws:MenuElement({id = "DrawsSpace1", name = "", type = SPACE})
-	self.Menu.Draws:MenuElement({id = "QDraw", name = "Q Range", value = false})
-	self.Menu.Draws:MenuElement({id = "WDraw", name = "W Range", value = false})
-	self.Menu.Draws:MenuElement({id = "RDraw", name = "R Range", value = false})
+	self.Menu.Draws:MenuElement({id = "QDraw", name = "Q Range", value = false, leftIcon = KaisaQImg})
+	self.Menu.Draws:MenuElement({id = "WDraw", name = "W Range", value = false, leftIcon = KaisaWImg})
+	self.Menu.Draws:MenuElement({id = "RDraw", name = "R Range", value = false, leftIcon = KaisaRImg})
 -- ranged helper
 	self.Menu:MenuElement({id = "rangedhelper", name = "Use RangedHelper", value = false})
 end
@@ -567,7 +570,7 @@ function Kaisa:CastingChecks()
 end
 
 function Kaisa:Spells()
-	WSpellData = {speed = 1750, range = 1400, delay = 0.4, radius = 60, collision = {"minion"}, type = "linear"}
+	WSpellData = {speed = 1750, range = 1400, delay = 0.4, radius = 65, collision = {"minion"}, type = "linear"}
 end
 
 function Kaisa:Tick()
@@ -805,41 +808,47 @@ local EnemyLoaded = false
 local EnemiesAround = count
 local MinionsLaneClear = laneclearcount
 local RAround = rcount
+local CaitIcon = "https://www.proguides.com/public/media/rlocal/champion/thumbnail/51.png"
+local CaitQIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/CaitlynPiltoverPeacemaker.png"
+local CaitWIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/CaitlynYordleTrap.png"
+local CaitEIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/CaitlynEntrapment.png"
+local CaitRIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/CaitlynAceintheHole.png"
+
 function Caitlyn:Menu()
-    self.Menu = MenuElement({type = MENU, id = "Caitlyn", name = "dnsCaitlyn"})
-    self.Menu:MenuElement({id = "QSpell", name = "Q", type = MENU})
-	self.Menu.QSpell:MenuElement({id = "QCombo", name = "Combo", value = true})
-	self.Menu.QSpell:MenuElement({id = "QComboHitChance", name = "HitChance", value = 0.5, min = 0.1, max = 1.0, step = 0.1})
-	self.Menu.QSpell:MenuElement({id = "QHarass", name = "Harass", value = false})
-	self.Menu.QSpell:MenuElement({id = "QHarassHitChance", name = "HitChance", value = 0.5, min = 0.1, max = 1.0, step = 0.1})
-	self.Menu.QSpell:MenuElement({id = "QHarassMana", name = "Mana %", value = 40, min = 0, max = 100, identifier = "%"})
-	self.Menu.QSpell:MenuElement({id = "QLaneClear", name = "LaneClear", value = false})
-	self.Menu.QSpell:MenuElement({id = "QLaneClearCount", name = "if HitCount is atleast", value = 5, min = 1, max = 9, step = 1})
-	self.Menu.QSpell:MenuElement({id = "QLaneClearMana", name = "Mana %", value = 60, min = 0, max = 100, identifier = "%"})
-	self.Menu.QSpell:MenuElement({id = "QLastHit", name = "LastHit", value = true})
-	self.Menu.QSpell:MenuElement({id = "QKS", name = "KS", value = true})
-	self.Menu:MenuElement({id = "WSpell", name = "W", type = MENU})
-	self.Menu.WSpell:MenuElement({id = "WImmo", name = "Auto W immobile Targets", value = true})
-	self.Menu:MenuElement({id = "ESpell", name = "E", type = MENU})
-	self.Menu.ESpell:MenuElement({id = "ECombo", name = "Combo", value = true})
-	self.Menu.ESpell:MenuElement({id = "EComboHitChance", name = "HitChance", value = 1, min = 0.1, max = 1.0, step = 0.1})
-	self.Menu.ESpell:MenuElement({id = "EHarass", name = "Harass", value = false})
-	self.Menu.ESpell:MenuElement({id = "EHarassHitChance", name = "HitChance", value = 1, min = 0.1, max = 1.0, step = 0.1})
-	self.Menu.ESpell:MenuElement({id = "EHarassMana", name = "Mana %", value = 60, min = 0, max = 100, identifier = "%"})
-	self.Menu.ESpell:MenuElement({id = "EGap", name = "Peel Meele Champs", value = true})
-	self.Menu:MenuElement({id = "RSpell", name = "R", type = MENU})
-	self.Menu.RSpell:MenuElement({id = "RKS", name = "KS", value = true})
-	self.Menu:MenuElement({id = "MakeDraw", name = "Nubody nees dravvs", type = MENU})
+    self.Menu = MenuElement({type = MENU, id = "Caitlyn", name = "dnsCaitlyn", leftIcon = CaitIcon})
+    self.Menu:MenuElement({id = "QSpell", name = "Q", type = MENU, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QCombo", name = "Combo", value = true, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QComboHitChance", name = "HitChance", value = 0.5, min = 0.1, max = 1.0, step = 0.1, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QHarass", name = "Harass", value = false, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QHarassHitChance", name = "HitChance", value = 0.5, min = 0.1, max = 1.0, step = 0.1, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QHarassMana", name = "Mana %", value = 40, min = 0, max = 100, identifier = "%", leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QLaneClear", name = "LaneClear", value = false, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QLaneClearCount", name = "if HitCount is atleast", value = 5, min = 1, max = 9, step = 1, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QLaneClearMana", name = "Mana %", value = 60, min = 0, max = 100, identifier = "%", leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QLastHit", name = "LastHit", value = true, leftIcon = CaitQIcon})
+	self.Menu.QSpell:MenuElement({id = "QKS", name = "KS", value = true, leftIcon = CaitQIcon})
+	self.Menu:MenuElement({id = "WSpell", name = "W", type = MENU, leftIcon = CaitWIcon})
+	self.Menu.WSpell:MenuElement({id = "WImmo", name = "Auto W immobile Targets", value = true, leftIcon = CaitWIcon})
+	self.Menu:MenuElement({id = "ESpell", name = "E", type = MENU, leftIcon = CaitEIcon})
+	self.Menu.ESpell:MenuElement({id = "ECombo", name = "Combo", value = true, leftIcon = CaitEIcon})
+	self.Menu.ESpell:MenuElement({id = "EComboHitChance", name = "HitChance", value = 1, min = 0.1, max = 1.0, step = 0.1, leftIcon = CaitEIcon})
+	self.Menu.ESpell:MenuElement({id = "EHarass", name = "Harass", value = false, leftIcon = CaitEIcon})
+	self.Menu.ESpell:MenuElement({id = "EHarassHitChance", name = "HitChance", value = 1, min = 0.1, max = 1.0, step = 0.1, leftIcon = CaitEIcon})
+	self.Menu.ESpell:MenuElement({id = "EHarassMana", name = "Mana %", value = 60, min = 0, max = 100, identifier = "%", leftIcon = CaitEIcon})
+	self.Menu.ESpell:MenuElement({id = "EGap", name = "Peel Meele Champs", value = true, leftIcon = CaitEIcon})
+	self.Menu:MenuElement({id = "RSpell", name = "R", type = MENU, leftIcon = CaitRIcon})
+	self.Menu.RSpell:MenuElement({id = "RKS", name = "KS", value = true, leftIcon = CaitRIcon})
+	self.Menu:MenuElement({id = "MakeDraw", name = "Nubody nees dravvs", type = MENU, leftIcon = CaitRIcon})
 	self.Menu.MakeDraw:MenuElement({id = "UseDraws", name = "U wanna hav dravvs?", value = false})
-	self.Menu.MakeDraw:MenuElement({id = "QDraws", name = "U wanna Q-Range dravvs?", value = false})
-	self.Menu.MakeDraw:MenuElement({id = "RDraws", name = "U wanna R-Range dravvs?", value = false})
+	self.Menu.MakeDraw:MenuElement({id = "QDraws", name = "U wanna Q-Range dravvs?", value = false, leftIcon = CaitQIcon})
+	self.Menu.MakeDraw:MenuElement({id = "RDraws", name = "U wanna R-Range dravvs?", value = false, leftIcon = CaitRIcon})
 	self.Menu:MenuElement({id = "rangedhelper", name = "Use RangedHelper", value = false})
 end
 
 function Caitlyn:Spells()
-    QSpellData = {speed = 2200, range = 1300, delay = 0.625, radius = 120, collision = {}, type = "linear"}
-	WSpellData = {speed = math.huge, range = 800, delay = 0.25, radius = 60, collision = {}, type = "circular"}
-	ESpellData = {speed = 1600, range = 750, delay = 0.15, radius = 100, collision = {minion}, type = "linear"}
+    QSpellData = {speed = 2200, range = 1300, delay = 0.625, radius = 50, collision = {}, type = "linear"}
+	WSpellData = {speed = math.huge, range = 800, delay = 0.25, radius = 65, collision = {}, type = "circular"}
+	ESpellData = {speed = 1600, range = 750, delay = 0.15, radius = 65, collision = {"minion"}, type = "linear"}
 end
 
 function Caitlyn:CastingChecks()
@@ -1156,10 +1165,15 @@ end
 
 class "Tristana"
 
-EnemyLoaded = false
+local EnemyLoaded = false
+local TristIcon = "https://www.proguides.com/public/media/rlocal/champion/thumbnail/18.png"
+local TristQIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/TristanaQ.png"
+local TristWIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/TristanaW.png"
+local TristEIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/TristanaE.png"
+local TristRIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/TristanaR.png"
 
 function Tristana:Menu()
-	self.Menu = MenuElement({type = MENU, id = "dnsTristana", name = "dnsTristana"})
+	self.Menu = MenuElement({type = MENU, id = "dnsTristana", name = "dnsTristana", leftIcon = TristIcon})
 -- main menu
 	self.Menu:MenuElement({id = "combo", name = "Combo", type = MENU})
 	self.Menu:MenuElement({id = "harass", name = "Harass", type = MENU})
@@ -1168,29 +1182,29 @@ function Tristana:Menu()
 	self.Menu:MenuElement({id = "draws", name = "Draws", type = MENU})
 	self.Menu:MenuElement({id = "rangedhelper", name = "Use RangedHelper", value = false})
 -- combo 
-	self.Menu.combo:MenuElement({id = "qcombo", name = "Use Q in Combo", value = true})
-	self.Menu.combo:MenuElement({id = "qcomboe", name = "Only Q when E", value = true})
-	self.Menu.combo:MenuElement({id = "ecombo", name = "Use E in Combo", value = true})
+	self.Menu.combo:MenuElement({id = "qcombo", name = "Use Q in Combo", value = true, leftIcon = TristQIcon})
+	self.Menu.combo:MenuElement({id = "qcomboe", name = "Only Q when E", value = true, leftIcon = TristQIcon})
+	self.Menu.combo:MenuElement({id = "ecombo", name = "Use E in Combo", value = true, leftIcon = TristEIcon})
 -- harass
-	self.Menu.harass:MenuElement({id = "qharass", name = "Use Q in Harass", value = true})
-	self.Menu.harass:MenuElement({id = "qharasse", name = "Only Q when E", value = true})
-	self.Menu.harass:MenuElement({id = "qharassmana", name = "Q Harass Mana", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
-	self.Menu.harass:MenuElement({id = "eharass", name = "Use E in Harass", value = true})
-	self.Menu.harass:MenuElement({id = "eharassmana", name = "E Harass Mana", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
+	self.Menu.harass:MenuElement({id = "qharass", name = "Use Q in Harass", value = true, leftIcon = TristQIcon})
+	self.Menu.harass:MenuElement({id = "qharasse", name = "Only Q when E", value = true, leftIcon = TristQIcon})
+	self.Menu.harass:MenuElement({id = "qharassmana", name = "Q Harass Mana", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = TristQIcon})
+	self.Menu.harass:MenuElement({id = "eharass", name = "Use E in Harass", value = true, leftIcon = TristEIcon})
+	self.Menu.harass:MenuElement({id = "eharassmana", name = "E Harass Mana", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = TristEIcon})
 -- laneclear
-	self.Menu.laneclear:MenuElement({id = "qlaneclear", name = "Use Q in LaneClear", value = true})
-	self.Menu.laneclear:MenuElement({id = "qlaneclearcount", name = "Q LaneClear Minions", value = 6, min = 1, max = 9, step = 1})
-	self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "Q LaneClear Mana", value = 60, min = 5, max = 95, step = 5, identifier = "%"})
+	self.Menu.laneclear:MenuElement({id = "qlaneclear", name = "Use Q in LaneClear", value = true, leftIcon = TristQIcon})
+	self.Menu.laneclear:MenuElement({id = "qlaneclearcount", name = "Q LaneClear Minions", value = 6, min = 1, max = 9, step = 1, leftIcon = TristQIcon})
+	self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "Q LaneClear Mana", value = 60, min = 5, max = 95, step = 5, identifier = "%", leftIcon = TristQIcon})
 -- auto 
-	self.Menu.auto:MenuElement({id = "rks", name = "Use R to KS", value = true})
-	self.Menu.auto:MenuElement({id = "wrks", name = "Use W + R to KS", value = true})
-	self.Menu.auto:MenuElement({id = "wrksspace", name = "To Use WRKS, normal RKS needs to be ticked", type = SPACE})
-	self.Menu.auto:MenuElement({id = "rpeel", name = "Use R to Peel", value = true})
-	self.Menu.auto:MenuElement({id = "rpeelhp", name = "If HP is lower then", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
+	self.Menu.auto:MenuElement({id = "rks", name = "Use R to KS", value = true, leftIcon = TristRIcon})
+	self.Menu.auto:MenuElement({id = "wrks", name = "Use W + R to KS", value = true, leftIcon = TristWIcon})
+	self.Menu.auto:MenuElement({id = "wrksspace", name = "To Use WRKS, normal RKS needs to be ticked", type = SPACE, leftIcon = TristRIcon})
+	self.Menu.auto:MenuElement({id = "rpeel", name = "Use R to Peel", value = true, leftIcon = TristRIcon})
+	self.Menu.auto:MenuElement({id = "rpeelhp", name = "If HP is lower then", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = TristRIcon})
 -- draws 
-	self.Menu.draws:MenuElement({id = "qtimer", name = "Draw Q Timer", value = false})
-	self.Menu.draws:MenuElement({id = "wdraw", name = "Draw W Range", value = false})
-	self.Menu.draws:MenuElement({id = "anydraw", name = "Draw AA/E/R Range", value = false})
+	self.Menu.draws:MenuElement({id = "qtimer", name = "Draw Q Timer", value = false, leftIcon = TristQIcon})
+	self.Menu.draws:MenuElement({id = "wdraw", name = "Draw W Range", value = false, leftIcon = TristWIcon})
+	self.Menu.draws:MenuElement({id = "anydraw", name = "Draw AA/E/R Range", value = false, leftIcon = TristEIcon})
 end
 
 function Tristana:Draw()
