@@ -1040,20 +1040,20 @@ function Caitlyn:Logic()
 			end
 		end
 	elseif Mode() == "Harass" and target then
-		if self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetDistance(myHero.pos, target.pos) > minQRange and not IsUnderEnemyTurret(myHero) then
+		if self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetDistance(myHero.pos, target.pos) > minQRange and not IsUnderEnemyTurret(myHero.pos) then
             local pred = _G.PremiumPrediction:GetPrediction(myHero, target, QSpellData)
 			if pred.CastPos and pred.HitChance > self.Menu.QSpell.QHarassHitChance:Value() then
 				Control.CastSpell(HK_Q, pred.CastPos)
 			end
-        elseif self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and (GetBuffDuration(target, "CaitlynEntrapmentMissile") >= 0.5 or GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5) and not IsUnderEnemyTurret(myHero) then
+        elseif self:CanUse(_Q, "Harass") and ValidTarget(target, maxQRange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and (GetBuffDuration(target, "CaitlynEntrapmentMissile") >= 0.5 or GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5) and not IsUnderEnemyTurret(myHero.pos) then
 			Control.CastSpell(HK_Q, target.pos)
 		end
-		if self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and not IsUnderEnemyTurret(myHero) then
+		if self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and not IsUnderEnemyTurret(myHero.pos) then
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, target, ESpellData)
 			if pred.CastPos and pred.HitChance > self.Menu.ESpell.EHarassHitChanceHitChance:Value() then 
 				Control.CastSpell(HK_E, pred.CastPos)
 			end
-		elseif self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5 and not IsUnderEnemyTurret(myHero) then
+		elseif self:CanUse(_E, "Harass") and ValidTarget(target, ERange) and self:CastingChecks() and not _G.SDK.Attack:IsActive() and GetBuffDuration(target, "caitlynyordletrapdebuff") >= 0.5 and not IsUnderEnemyTurret(myHero.pos) then
 			local pred = _G.PremiumPrediction:GetPrediction(myHero, target, ESpellData)
 			if pred.CastPos and pred.HitChance > 0.5 then
 				Control.CastSpell(HK_E, pred.CastPos)
