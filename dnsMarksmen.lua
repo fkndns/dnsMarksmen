@@ -1342,17 +1342,17 @@ function Tristana:Auto()
 		end
 
 		--wrks
-		if enemy and ValidTarget(enemy, AAERRange + WRange - 100) and GetDistance(enemy.pos) > AAERRange + 50 and self:CanUse(_R, "WRKS") and self:CanUse(_W, "WRKS") and self:CastingChecks() and myHero.attackData.state ~= 2 then
+		if enemy and ValidTarget(enemy, AAERRange + WRange - 100) and GetDistance(enemy.pos, myHero.pos) > AAERRange + 50 and self:CanUse(_R, "WRKS") and self:CanUse(_W, "WRKS") and self:CastingChecks() and myHero.attackData.state ~= 2 then
 			local EDamage = self:EDMG(enemy)
 			local RDamage = getdmg("R", enemy, myHero, myHero:GetSpellData(_R).level)
-			if GetBuffStacks(enemy, "tristanaecharge") >= 3 and enemy.health <= RDamage + EDamage or enemy.health <= RDamage then
+			if (GetBuffStacks(enemy, "tristanaecharge") >= 3 and enemy.health <= RDamage + EDamage or enemy.health <= RDamage) then
 				local Direction = Vector((enemy.pos-myHero.pos):Normalized())
 				local WSpot = enemy.pos - Direction * (AAERRange - 50)
 				Control.CastSpell(HK_W, WSpot)
 			end
 		end
 		-- r peel
-		if enemy and ValidTarget(enemy, 250 + myHero.boundingRadius + enemy.boundingRadius) and self:CanUse(_R, "Peel") and IsFacing(enemy) and not IsMyHeroFacing(enemy) and self:CastingChecks() and enemy.activeSpell.target == myHero.handle then
+		if enemy and ValidTarget(enemy, 250 + myHero.boundingRadius + enemy.boundingRadius) and self:CanUse(_R, "Peel") and IsFacing(enemy) and not IsMyHeroFacing(enemy) and self:CastingChecks() and enemy.activeSpell.target == myHero.handle and enemy.activeSpell.valid and enemy.activeSpell.spellWasCast then
 			Control.CastSpell(HK_R, enemy)
 		end
 		-- force target
