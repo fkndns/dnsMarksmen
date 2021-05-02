@@ -375,6 +375,14 @@ local function CheckHPPred(unit, SpellSpeed)
     end
 end
 
+local function MMCast(pos, spell)
+        local MMSpot = Vector(pos):ToMM()
+        local MouseSpotBefore = mousePos
+        Control.SetCursorPos(MMSpot.x, MMSpot.y)
+        Control.KeyDown(spell); Control.KeyUp(spell)
+        DelayAction(function() Control.SetCursorPos(MouseSpotBefore) end, 0.20)
+end
+
 function EnableMovement()
     SetMovement(true)
 end
@@ -1521,8 +1529,8 @@ local BaseAARange = 580
 local AARange = 0
 local QRange = 0
 local QCheckRange = 0
-local WRange = 1340 
-local ERange = 800 
+local WRange = 1450
+local ERange = 900
 local RRange = 20000
 
 -- buffs
@@ -1606,9 +1614,9 @@ function Jinx:Draws()
 end
 
 function Jinx:Spells()
-    WSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 50, Speed = 3300, Range = WRange, Collision = true, MaxCollision = 0, CollisionTypes = {GGPrediction.COLLISION_MINION, GGPrediction.COLLISION_ENEMYHERO, GGPrediction.COLLISION_YASUOWALL}, Type = GGPrediction.SPELLTYPE_LINE})
-    ESpell = GGPrediction:SpellPrediction({Delay = 0.9, Radius = 50, Speed = math.huge, Range = ERange, Collision = false, Type = {GGPrediction.SPELLTYPE_CIRCLE}})
-    RSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 50, Speed = 1700, Range = 20000, Collision = true, MaxCollision = 0, CollisionTypes = {GGPrediction.COLLISION_ENEMYHERO, GGPrediction.COLLISION_YASUOWALL}})
+    WSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 60, Range = WRange, Speed = 1200, Collision = true, Type = GGPrediction.SPELLTYPE_LINE})
+    ESpell = GGPrediction:SpellPrediction({Delay = 0.9, Radius = 10, Range = ERange, Speed = 1750, Collision = false, Type = GGPrediction.SPELLTYPE_CIRCLE})
+    RSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 140, Range = RRange, Speed = 1700, Collision = false, Type = GGPrediction.SPELLTYPE_LINE})
 end
 
 function Jinx:Tick()
@@ -1799,8 +1807,7 @@ function Jinx:RCombo(enemy)
                 if enemy.pos:ToScreen().onScreen then
                     Control.CastSpell(HK_R, RSpell.CastPosition)
                 else
-                    local MMPos = Vector(RSpell.CastPosition):ToMM()
-                    Control.CastSpell(HK_R, MMPos)
+                    MMCast(RSpell.CastPosition, HK_R)
                 end
             end
         end
@@ -1840,8 +1847,7 @@ function Jinx:RKS(enemy)
                 if enemy.pos:ToScreen().onScreen then
                     Control.CastSpell(HK_R, RSpell.CastPosition)
                 else
-                    local MMPos = Vector(RSpell.CastPosition):ToMM()
-                    Control.CastSpell(HK_R, MMPos)
+                    MMCast(RSpell.CastPosition, HK_R)
                 end
             end
         end
@@ -1855,8 +1861,7 @@ function Jinx:SemiR(enemy)
             if enemy.pos:ToScreen().onScreen then
                 Control.CastSpell(HK_R, RSpell.CastPosition)
             else
-                local MMPos = Vector(RSpell.CastPosition):ToMM()
-                Control.CastSpell(HK_R, MMPos)
+                MMCast(RSpell.CastPosition, HK_R)
             end
         end
     end
