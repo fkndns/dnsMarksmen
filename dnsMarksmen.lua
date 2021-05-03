@@ -1919,7 +1919,6 @@ function Jinx:EnemiesAround(enemy)
     if GetDistance(myHero.pos, enemy.pos) <= 700 then
         count = count + 1
     end
-    PrintChat(count)
     return count
 end
 
