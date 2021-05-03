@@ -1545,6 +1545,8 @@ local EIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/th
 local RIcon = "https://www.proguides.com/public/media/rlocal/champion/ability/thumbnail/JinxR.png"
 
 -- counts
+local ComboTimer = 0
+local Timer = Game.Timer()
 local QLaneClearCount = nil
 
 function Jinx:Menu()
@@ -1629,13 +1631,12 @@ function Jinx:Tick()
     end
     self:GetQRange()
     self:GetAARange()
-    --if target and ValidTarget(target) then
-        --PrintChat(target.pos:To2D())
-        --PrintChat(mousePos:To2D())
-        --GaleMouseSpot = self:RangedHelper(target)
-    --else
-        --G.SDK.Orbwalker.ForceMovement = nil
-    --end
+    if Mode() == "Combo" then
+        ComboTimer = Game.Timer() - Timer
+    else
+        ComboTimer = 0
+        Timer = Game.Timer()
+    end
     CastingQ = myHero.activeSpell.name == "JinxQ"
     CastingW = myHero.activeSpell.name == "JinxW"
     CastingE = myHero.activeSpell.name == "JinxE"
@@ -1711,6 +1712,7 @@ function Jinx:CanUse(spell, mode)
 end
 
 function Jinx:Logic()
+    if ComboTimer > 0 and ComboTimer < 0.2 then return end
     if Mode() == "Combo" then
         self:QCombo()
         self:WCombo()
@@ -1719,6 +1721,7 @@ function Jinx:Logic()
 end
 
 function Jinx:Auto()
+    if ComboTimer > 0 and ComboTimer < 0.2 then return end
     for i, enemy in pairs(EnemyHeroes) do 
         if Mode() == "Combo" then
             self:RCombo(enemy)
@@ -1983,4 +1986,5 @@ end
 function OnLoad()
     Manager()
 end
+
 
