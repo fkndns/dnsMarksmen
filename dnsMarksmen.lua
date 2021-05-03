@@ -1616,9 +1616,9 @@ function Jinx:Draws()
 end
 
 function Jinx:Spells()
-    WSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 60, Range = WRange, Speed = 1200, Collision = true, Type = GGPrediction.SPELLTYPE_LINE})
-    ESpell = GGPrediction:SpellPrediction({Delay = 0.9, Radius = 10, Range = ERange, Speed = 1750, Collision = false, Type = GGPrediction.SPELLTYPE_CIRCLE})
-    RSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 140, Range = RRange, Speed = 1700, Collision = false, Type = GGPrediction.SPELLTYPE_LINE})
+    WSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 50, Range = WRange, Speed = 1200, Collision = true, Type = GGPrediction.SPELLTYPE_LINE})
+    ESpell = GGPrediction:SpellPrediction({Delay = 0.9, Radius = 50, Range = ERange, Speed = 1750, Collision = false, Type = GGPrediction.SPELLTYPE_CIRCLE})
+    RSpell = GGPrediction:SpellPrediction({Delay = 0.6, Radius = 50, Range = RRange, Speed = 1700, Collision = false, Type = GGPrediction.SPELLTYPE_LINE})
 end
 
 function Jinx:Tick()
