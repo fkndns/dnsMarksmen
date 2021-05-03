@@ -1759,7 +1759,7 @@ end
 function Jinx:WCombo()
     local wtarget = GetTarget(WRange)
     if wtarget == nil then return end
-    if ValidTarget(wtarget, WRange) and self:CanUse(_W, "Combo") and self:CastingChecks() and myHero.attackData.state ~= 2 then
+    if ValidTarget(wtarget, WRange) and self:CanUse(_W, "Combo") and self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 then
         if self.Menu.combo.wcomboaa:Value() then
             if GetDistance(myHero.pos, wtarget.pos) > AARange then
                 WSpell:GetPrediction(wtarget, myHero)
@@ -1779,7 +1779,7 @@ end
 function Jinx:ECombo()
     local etarget = GetTarget(ERange)
     if etarget == nil then return end
-    if ValidTarget(etarget, ERange) and self:CanUse(_E, "Combo") and self:CastingChecks() and myHero.attackData.state ~= 2 then
+    if ValidTarget(etarget, ERange) and self:CanUse(_E, "Combo") and self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 then
         ESpell:GetPrediction(etarget, myHero)
         if ESpell:CanHit(self.Menu.combo.ecombohc:Value() + 1) then
             Control.CastSpell(HK_E, ESpell.CastPosition)
@@ -1788,7 +1788,7 @@ function Jinx:ECombo()
 end
 
 function Jinx:RCombo(enemy)
-    if ValidTarget(enemy, self.Menu.combo.rcomborange:Value()) and self:CanUse(_R, "Combo") and GetEnemyCount(400, enemy) >= self.Menu.combo.rcombocount:Value() and self:CastingChecks() and myHero.attackData.state ~= 2 then
+    if ValidTarget(enemy, self.Menu.combo.rcomborange:Value()) and self:CanUse(_R, "Combo") and GetEnemyCount(400, enemy) >= self.Menu.combo.rcombocount:Value() and self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 then
         if self.Menu.combo.rcomboaa:Value() then
             if GetDistance(enemy.pos, myHero.pos) > AARange then
                 RSpell:GetPrediction(enemy, myHero)
@@ -1815,7 +1815,7 @@ function Jinx:RCombo(enemy)
 end
 
 function Jinx:WKS(enemy)
-    if ValidTarget(enemy, WRange) and self:CanUse(_W, "Auto") and self:CastingChecks() and myHero.attackData.state ~= 2 then
+    if ValidTarget(enemy, WRange) and self:CanUse(_W, "Auto") and self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 then
         local WDam = getdmg("W", enemy, myHero, myHero:GetSpellData(_W).level)
         if enemy.health <= WDam then
             WSpell:GetPrediction(enemy, myHero)
@@ -1827,7 +1827,7 @@ function Jinx:WKS(enemy)
 end
 
 function Jinx:EInterrupt(enemy)
-    if ValidTarget(enemy, ERange) and self:CanUse(_E, "Auto") and self:CastingChecks() and myHero.attackData.state ~= 2 then
+    if ValidTarget(enemy, ERange) and self:CanUse(_E, "Auto") and self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 then
         if GetDistance(myHero.pos, enemy.pos) <= 200 and enemy.activeSpell.valid and enemy.activeSpell.spellWasCast and enemy.activeSpell.target == myHero.handle then
             Control.CastSpell(HK_E, myHero)
         elseif enemy.pathing.isDashing then
@@ -1839,7 +1839,7 @@ function Jinx:EInterrupt(enemy)
 end
 
 function Jinx:RKS(enemy)
-    if ValidTarget(enemy, self.Menu.auto.rautorange:Value()) and self:CanUse(_R, "Auto") and self:CastingChecks() and myHero.attackData.state ~= 2 and self:EnemiesAround(enemy) == 0 then
+    if ValidTarget(enemy, self.Menu.auto.rautorange:Value()) and self:CanUse(_R, "Auto") and self:CastingChecks() and myHero.attackData.state ~= 2 and self:EnemiesAround(enemy) == 0 and _G.SDK.Cursor.Step == 0 then
         local RDam = CalcRDmg(enemy)
         if enemy.health <= RDam then
             RSpell:GetPrediction(enemy, myHero)
@@ -1855,7 +1855,7 @@ function Jinx:RKS(enemy)
 end
 
 function Jinx:SemiR(enemy)
-    if ValidTarget(enemy, RRange) and self.Menu.combo.rsemi:Value() and GetDistance(enemy.pos, mousePos) <= 400 and self:CastingChecks() and myHero.attackData.state ~= 2 then
+    if ValidTarget(enemy, RRange) and self.Menu.combo.rsemi:Value() and GetDistance(enemy.pos, mousePos) <= 400 and self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 then
         RSpell:GetPrediction(enemy, myHero)
         if RSpell:CanHit(HITCHANCE_HIGH) then
             if enemy.pos:ToScreen().onScreen then
@@ -1869,7 +1869,7 @@ end
 
 
 function Jinx:WLastHit(minion)
-    if ValidTarget(minion, WRange) and self:CanUse(_W, "LastHit") and self:CastingChecks() and myHero.attackData.state ~= 2 and (minion.charName == "SRU_ChaosMinionSiege" or minion.charName == "SRU_OrderMinionSiege") and GetDistance(myHero.pos, minion.pos) >= QCheckRange then
+    if ValidTarget(minion, WRange) and self:CanUse(_W, "LastHit") and self:CastingChecks() and myHero.attackData.state ~= 2 and (minion.charName == "SRU_ChaosMinionSiege" or minion.charName == "SRU_OrderMinionSiege") and GetDistance(myHero.pos, minion.pos) >= QCheckRange and _G.SDK.Cursor.Step == 0 then
         local WDam = getdmg("W", minion, myHero, myHero:GetSpellData(_Q).level)
         if minion.health <= WDam then
             local minions2 = _G.SDK.ObjectManager:GetEnemyMinions(WRange)
@@ -1916,6 +1916,7 @@ function Jinx:EnemiesAround(enemy)
     if GetDistance(myHero.pos, enemy.pos) <= 700 then
         count = count + 1
     end
+    PrintChat(count)
     return count
 end
 
@@ -1952,8 +1953,8 @@ function Jinx:MoveHelper(unit)
     if not IsFacing(unit) then
         MouseSpotDistance = EAARangel + ExtraRangeChaseDist
     end
-    if MouseSpotDistance > AARange then
-        MouseSpotDistance = AARange
+    if MouseSpotDistance > BaseAARange then
+        MouseSpotDistance = BaseAARange
     end
 
     local MouseSpot = unit.pos - MouseDirection * (MouseSpotDistance)
