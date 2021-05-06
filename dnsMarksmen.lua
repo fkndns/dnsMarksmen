@@ -1629,9 +1629,9 @@ function Jinx:Draws()
 end
 
 function Jinx:Spells()
-    WSpell = {speed = 1200, delay = 0.6, range = WRange, radius = 50, collision = {"minion"}, type = "linear"}
-    ESpell = {speed = 1750, delay = 0.5, range = ERange, radius = 50, collision = {}, type = "circular"}
-    RSpell = {speed = 1700, delay = 0.6, range = RRange, radius = 50, collision = {}, type = "linear"}
+    WSpell = {speed = 3300, delay = 0.6, range = WRange, radius = 50, collision = {"minion"}, type = "linear"}
+    ESpell = {speed = math.huge, delay = 0.9, range = ERange, radius = 50, collision = {}, type = "circular"}
+    RSpell = {speed = 1950, delay = 0.6, range = RRange, radius = 50, collision = {}, type = "linear"}
 end
 
 function Jinx:Tick()
@@ -1680,7 +1680,7 @@ function Jinx:CastingChecks()
 end
 
 function Jinx:SmoothChecks()
-    if self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 and (ComboTimer == 0 or ComboTimer > 0.1) then
+    if self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 and (ComboTimer == 0 or ComboTimer > 0.2) then
         return true
     else 
         return false
@@ -1838,8 +1838,8 @@ end
 
 function Jinx:WKS(enemy)
     if ValidTarget(enemy, WRange) and self:CanUse(_W, "Auto") and self:SmoothChecks() then
-        local WDam = getdmg("W", enemy, myHero, myHero:GetSpellData(_W).level)
-        if enemy.health <= WDam then
+        local WDam = getdmg("W", enemy, myHero)
+        if enemy.health < WDam then
             local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, WSpell)
             if pred.CastPos and pred.HitChance >= 0.25 then
                 Control.CastSpell(HK_W, pred.CastPos)
@@ -1863,7 +1863,7 @@ end
 function Jinx:RKS(enemy)
     if ValidTarget(enemy, self.Menu.auto.rautorange:Value()) and self:CanUse(_R, "Auto") and self:SmoothChecks() and self:EnemiesAround(enemy) == 0 then
         local RDam = CalcRDmg(enemy)
-        if enemy.health <= RDam then
+        if enemy.health < RDam then
             local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, RSpell)
             if pred.CastPos and pred.HitChance >= 0.25 then
                 if enemy.pos:ToScreen().onScreen then
@@ -2004,4 +2004,3 @@ end
 function OnLoad()
     Manager()
 end
-
