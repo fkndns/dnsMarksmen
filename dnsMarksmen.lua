@@ -2,27 +2,29 @@ require "DamageLib"
 require "2DGeometry"
 require "MapPositionGOS"
 require "PremiumPrediction"
+require "GGPrediction"
 
 
 local EnemyHeroes = {}
 local AllyHeroes = {}
 local EnemySpawnPos = nil
 local AllySpawnPos = nil
---[[ AutoUpdate disabled until proper rank
- do
+
+--[[ AutoUpdate deactivated until proper rank.
+do
     
-    local Version = 1.6
+    local Version = 1.0
     
     local Files = {
         Lua = {
             Path = SCRIPT_PATH,
-            Name = "dnsMarksmen.lua",
-            Url = "https://raw.githubusercontent.com/fkndns/dnsMarksmen/main/dnsMarksmen.lua"
-        },
+            Name = "dnsMages.lua",
+            Url = "https://raw.githubusercontent.com/fkndns/dnsMages/main/dnsMages.lua"
+       },
         Version = {
             Path = SCRIPT_PATH,
-            Name = "dnsMarksmen.version",
-            Url = "https://raw.githubusercontent.com/fkndns/dnsMarksmen/main/dnsMarksmen.version"    -- check if Raw Adress correct pls.. after you have create the version file on Github
+            Name = "dnsActivator.version",
+            Url = "https://raw.githubusercontent.com/fkndns/dnsMages/main/dnsMages.version"    -- check if Raw Adress correct pls.. after you have create the version file on Github
         }
     }
     
@@ -54,8 +56,9 @@ local AllySpawnPos = nil
     
     AutoUpdate()
 
-end
+end 
 --]]
+
 local ItemHotKey = {[ITEM_1] = HK_ITEM_1, [ITEM_2] = HK_ITEM_2,[ITEM_3] = HK_ITEM_3, [ITEM_4] = HK_ITEM_4, [ITEM_5] = HK_ITEM_5, [ITEM_6] = HK_ITEM_6,}
 
 local function GetInventorySlotItem(itemID)
@@ -148,7 +151,24 @@ function IsCleanse(unit)
     end
     return MaxDuration
 end
-			
+
+function IsChainable(unit)
+    local MaxDuration = 0
+    for i = 0, unit.buffCount do
+        local buff = unit:GetBuff(i)
+        if buff and buff.count > 0 then
+            local BuffType = buff.type
+            if BuffType == 5 or BuffType == 8 or BuffType == 9 or BuffType == 11 or BuffType == 21 or BuffType == 22 or BuffType == 24 or BuffType == 31 or BuffType == 10 then
+                local BuffDuration = buff.duration
+                if BuffDuration > MaxDuration then
+                    MaxDuration = BuffDuration
+                end
+            end
+        end
+    end
+    return MaxDuration
+end
+
 function GetEnemyHeroes()
     for i = 1, Game.HeroCount() do
         local Hero = Game.Hero(i)
@@ -280,6 +300,24 @@ function GetTarget(range)
     end
 end
 
+function CalcRDmg(unit)
+    local Damage = 0
+    local Distance = GetDistance(myHero.pos, unit.pos)
+    local MathDist = math.floor(math.floor(Distance)/100)   
+    local level = myHero:GetSpellData(_R).level
+    local BaseQ = ({25, 35, 45})[level] + 0.15 * myHero.bonusDamage
+    local QMissHeal = ({25, 30, 35})[level] / 100 * (unit.maxHealth - unit.health)
+    local dist = myHero.pos:DistanceTo(unit.pos)
+    if Distance < 100 then
+        Damage = BaseQ + QMissHeal
+    elseif Distance >= 1500 then
+        Damage = BaseQ * 10 + QMissHeal     
+    else
+        Damage = ((((MathDist * 6) + 10) / 100) * BaseQ) + BaseQ + QMissHeal
+    end
+    return CalcPhysicalDamage(myHero, unit, Damage)
+end
+
 function GotBuff(unit, buffname)
     for i = 0, unit.buffCount do
         local buff = unit:GetBuff(i)
@@ -374,18 +412,6 @@ local function CheckHPPred(unit, SpellSpeed)
     end
 end
 
-local function MMCast(pos, spell)
-        local MMSpot = Vector(pos):ToMM()
-        local MouseSpotBefore = mousePos
-        Control.SetCursorPos(MMSpot.x, MMSpot.y)
-        Control.KeyDown(spell); Control.KeyUp(spell)
-        DelayAction(function() Control.SetCursorPos(MouseSpotBefore) end, 0.20)
-end
-
-function EnableMovement()
-    SetMovement(true)
-end
-
 local function IsValid(unit)
     if (unit and unit.valid and unit.isTargetable and unit.alive and unit.visible and unit.networkID and unit.pathing and unit.health > 0) then
         return true;
@@ -410,17 +436,6 @@ local function ClosestPointOnLineSegment(p, p1, p2)
         return p2, false
     end
     return {x = ax + t * bxax, z = az + t * bzaz}, true
-end
-
-local function GetWDmg(unit)
-	local Wdmg = getdmg("W", unit, myHero, 1)
-	local W2dmg = getdmg("W", unit, myHero, 2)	
-	local buff = GetBuffData(unit, "kaisapassivemarker")
-	if buff and buff.count == 4 then
-		return (Wdmg+W2dmg)		
-	else		
-		return Wdmg 
-	end 
 end
 
 local function ValidTarget(unit, range)
@@ -448,22 +463,71 @@ local function GetEnemyCount(range, pos)
     return count
 end
 
-function CalcRDmg(unit)
-    local Damage = 0
-    local Distance = GetDistance(myHero.pos, unit.pos)
-    local MathDist = math.floor(math.floor(Distance)/100)   
-    local level = myHero:GetSpellData(_R).level
-    local BaseQ = ({25, 40, 55})[level] + 0.15 * myHero.bonusDamage
-    local QMissHeal = ({25, 30, 35})[level] / 100 * (unit.maxHealth - unit.health)
-    local dist = myHero.pos:DistanceTo(unit.pos)
-    if Distance < 100 then
-        Damage = BaseQ + QMissHeal
-    elseif Distance >= 1500 then
-        Damage = BaseQ * 10 + QMissHeal     
-    else
-        Damage = ((((MathDist * 6) + 10) / 100) * BaseQ) + BaseQ + QMissHeal
+local function GetAllyCount(range, pos)
+    local pos = pos.pos
+    local count = 0
+    for i, hero in pairs(AllyHeroes) do
+    local Range = range * range
+        if GetDistanceSqr(pos, hero.pos) < Range and IsValid(hero) then
+        count = count + 1
+        end
     end
-    return CalcPhysicalDamage(myHero, unit, Damage)
+    return count
+end
+
+local function GetMinionCount(checkrange, range, pos)
+    local minions = _G.SDK.ObjectManager:GetEnemyMinions(checkrange)
+    local pos = pos.pos
+    local count = 0
+    for i = 1, #minions do 
+        local minion = minions[i]
+        local Range = range * range
+        if GetDistanceSqr(pos, minion.pos) < Range and IsValid(minion) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+local function dnsTargetSelector(unit, range)
+    local fullDamUnit = (unit.totalDamage + unit.ap * 0.7)
+    local healthPercentUnit = (unit.health / unit.maxHealth)
+    local unitStrength = fullDamUnit / healthPercentUnit
+    local dtarget = nil
+    if dtarget ~= nil then
+        local fullDamdtarget = (dtarget.totalDamage + dtarget.ap * 0.7) 
+        local healthPercentdtarget = (dtarget.health / dtarget.maxHealth) 
+        local dtargetStrength = fullDamdtarget / healthPercentdtarget
+    end
+    if ValidTarget(unit, range) then
+        --PrintChat("target")
+        if dtarget == nil or unitStrength > dtargetStrength then
+            dtarget = unit
+            PrintChat(dtarget.charName)
+        end
+    end
+    return dtarget
+end
+
+function GetTurretShot(unit)
+    local turrets = _G.SDK.ObjectManager:GetTurrets(GetDistance(unit.pos) + 1000)
+    for i = 1, #turrets do
+        local turret = turrets[i]
+        if turret and turret.activeSpell.valid and turret.activeSpell.target == unit.handle and not turret.activeSpell.isStopped and turret.team == 300-myHero.team then
+            --PrintChat("turret shot")
+            return true
+        else
+            return false
+        end
+    end
+end
+
+local function CustomCastMM(spell,pos)
+    local MMSpot = Vector(pos):ToMM()
+    local MouseSpotBefore = mousePos
+    Control.SetCursorPos(MMSpot.x, MMSpot.y)
+    Control.KeyDown(spell); Control.KeyUp(spell)
+    DelayAction(function() Control.SetCursorPos(MouseSpotBefore) end, 0.20)
 end
 
 local function HitChanceConvert(menVal)
@@ -479,6 +543,30 @@ local function HitChanceConvert(menVal)
         return 1
     end
 end
+
+function GGCast(spell, target, spellprediction, hitchance)
+        if not (target or spellprediction) then
+            return false
+        end
+        if spellprediction == nil then
+            if target == nil then
+                Control.KeyDown(spell)
+                Control.KeyUp(spell)
+                return true
+            end
+            _G.Control.CastSpell(spell, target)
+            return true
+        end
+        if target == nil then
+            return false
+        end
+        spellprediction:GetPrediction(target, myHero)
+        if spellprediction:CanHit(hitchance or HITCHANCE_HIGH) then
+            _G.Control.CastSpell(spell, spellprediction.CastPosition)
+            return true
+        end
+        return false
+    end
 
 class "Manager"
 
@@ -1569,12 +1657,12 @@ function Jinx:Menu()
     self.Menu:MenuElement({id = "combo", name = "Combo", type = MENU})
     self.Menu.combo:MenuElement({id = "qcombo", name = "Use [Q] in Combo", value = true, leftIcon = QIcon})
     self.Menu.combo:MenuElement({id = "wcombo", name = "Use [W] in Combo", value = true, leftIcon = WIcon})
-    self.Menu.combo:MenuElement({id = "wcombohc", name = "[W] HitChance", value = 2, drop = {"Low", "Normal", "High", "Very High", "Immobile"}, leftIcon = WIcon})
+    self.Menu.combo:MenuElement({id = "wcombohc", name = "[W] HitChance", value = 2, drop = {"Normal", "High", "Immobile"}, leftIcon = WIcon})
     self.Menu.combo:MenuElement({id = "wcomboaa", name = "Use [W] only if Target is out of [AA] Range", value = true, leftIcon = WIcon})
     self.Menu.combo:MenuElement({id = "ecombo", name = "Use [E] in Combo", value = true, leftIcon = EIcon})
-    self.Menu.combo:MenuElement({id = "ecombohc", name = "[E] HitChance", value = 2, drop = {"Low", "Normal", "High", "Very High", "Immobile"}, leftIcon = EIcon})
+    self.Menu.combo:MenuElement({id = "ecombohc", name = "[E] HitChance", value = 2, drop = {"Normal", "High", "Immobile"}, leftIcon = EIcon})
     self.Menu.combo:MenuElement({id = "rcombo", name = "Use [R] in Combo", value = true, leftIcon = RIcon})
-    self.Menu.combo:MenuElement({id = "rcombohc", name = "[R] HitChance", value = 2, drop = {"Low", "Normal", "High", "Very High", "Immobile"}, leftIcon = RIcon})
+    self.Menu.combo:MenuElement({id = "rcombohc", name = "[R] HitChance", value = 2, drop = {"Normal", "High", "Immobile"}, leftIcon = RIcon})
     self.Menu.combo:MenuElement({id = "rcombocount", name = "[R] HitCount", value = 3, min = 1, max = 5, step = 1, leftIcon = RIcon})
     self.Menu.combo:MenuElement({id = "rcomboaa", name = "Use [R] if Target is out of [AA] Range", value = true, leftIcon = RIcon})
     self.Menu.combo:MenuElement({id = "rcomborange", name = "[R] Range", value = 3000, min = 500, max = 20000, step = 500, leftIcon = RIcon})
@@ -1632,6 +1720,10 @@ function Jinx:Spells()
     WSpell = {speed = 3300, delay = 0.6, range = WRange, radius = 50, collision = {"minion"}, type = "linear"}
     ESpell = {speed = math.huge, delay = 0.9, range = ERange, radius = 50, collision = {}, type = "circular"}
     RSpell = {speed = 1950, delay = 0.6, range = RRange, radius = 50, collision = {}, type = "linear"}
+
+    W = GGPrediction:SpellPrediction({Type = GGPrediction.SPELLTYPE_LINE, Speed = 3300, Delay = 0.6, Radius = 60, Range = 1450, Collision = true, MaxCollision = 0, CollisionTypes = {GGPrediction.COLLISION_MINION}})
+    E = GGPrediction:SpellPrediction({Type = GGPrediction.SPELLTYPE_CIRCLE, Speed = math.huge, Delay = 0.9, Radius = 60, Range = 900, Collision = false})
+    R = GGPrediction:SpellPrediction({Type = GGPrediction.SPELLTYPE_LINE, Speed = 1950, Delay = 0.6, Radius = 60, Range = 20000, Collision = true, MaxCollision = 0, CollisionTypes = {GGPrediction.COLLISION_ENEMYHERO}})
 end
 
 function Jinx:Tick()
@@ -1644,12 +1736,6 @@ function Jinx:Tick()
     end
     self:GetQRange()
     self:GetAARange()
-    if Mode() == "Combo" then
-        ComboTimer = Game.Timer() - Timer
-    else
-        ComboTimer = 0
-        Timer = Game.Timer()
-    end
     CastingQ = myHero.activeSpell.name == "JinxQ"
     CastingW = myHero.activeSpell.name == "JinxW"
     CastingE = myHero.activeSpell.name == "JinxE"
@@ -1680,7 +1766,7 @@ function Jinx:CastingChecks()
 end
 
 function Jinx:SmoothChecks()
-    if self:CastingChecks() and myHero.attackData.state ~= 2 and _G.SDK.Cursor.Step == 0 and (ComboTimer == 0 or ComboTimer > 0.2) then
+    if self:CastingChecks() and not _G.SDK.Attack:IsActive() and _G.SDK.Cursor.Step == 0 and _G.SDK.Spell:CanTakeAction({q = 0, w = 0.73, e = 0.33, r = 0.73}) then
         return true
     else 
         return false
@@ -1785,16 +1871,10 @@ function Jinx:WCombo()
     if ValidTarget(wtarget, WRange) and self:CanUse(_W, "Combo") and self:SmoothChecks() then
         if self.Menu.combo.wcomboaa:Value() then
             if GetDistance(myHero.pos, wtarget.pos) > AARange then
-                local pred = _G.PremiumPrediction:GetPrediction(myHero, wtarget, WSpell)
-                if pred.CastPos and pred.HitChance >= HitChanceConvert(self.Menu.combo.wcombohc:Value()) then
-                    Control.CastSpell(HK_W, pred.CastPos)
-                end
+                GGCast(HK_W, wtarget, W, self.Menu.combo.wcombohc:Value()+1)
             end
         else
-            local pred = _G.PremiumPrediction:GetPrediction(myHero, wtarget, WSpell)
-            if pred.CastPos and pred.HitChance >= HitChanceConvert(self.Menu.combo.wcombohc:Value()) then
-                Control.CastSpell(HK_W, pred.CastPos)
-            end
+            GGCast(HK_W, wtarget, W, self.Menu.combo.wcombohc:Value()+1)
         end
     end
 end
@@ -1803,10 +1883,7 @@ function Jinx:ECombo()
     local etarget = GetTarget(ERange)
     if etarget == nil then return end
     if ValidTarget(etarget, ERange) and self:CanUse(_E, "Combo") and self:SmoothChecks() then
-        local pred = _G.PremiumPrediction:GetPrediction(myHero, etarget, ESpell)
-        if pred.CastPos and pred.HitChance >= HitChanceConvert(self.Menu.combo.ecombohc:Value()) then
-            Control.CastSpell(HK_E, pred.CastPos)
-        end
+        GGCast(HK_E, etarget, E, self.Menu.combo.ecombohc:Value()+1)
     end
 end
 
@@ -1814,22 +1891,22 @@ function Jinx:RCombo(enemy)
     if ValidTarget(enemy, self.Menu.combo.rcomborange:Value()) and self:CanUse(_R, "Combo") and GetEnemyCount(400, enemy) >= self.Menu.combo.rcombocount:Value() and self:SmoothChecks() then
         if self.Menu.combo.rcomboaa:Value() then
             if GetDistance(enemy.pos, myHero.pos) > AARange then
-                local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, RSpell)
-                if pred.CastPos and pred.HitChance >= HitChanceConvert(self.Menu.combo.rcombohc:Value()) then
-                    if enemy.pos:ToScreen().onScreen then
-                        Control.CastSpell(HK_R, pred.CastPos)
-                    else
-                        MMCast(pred.CastPos, HK_R)
+                if enemy.pos:ToScreen().onScreen then
+                    GGCast(HK_R, enemy, R, self.Menu.combo.rcombohc:Value()+1)
+                else
+                    R:GetPrediction(enemy, myHero)
+                    if R:CanHit(self.Menu.combo.rcombohc:Value()+1) then
+                        CustomCastMM(HK_R, R.CastPosition)
                     end
                 end
             end
         else
-            local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, RSpell)
-            if pred.CastPos and pred.HitChance >= HitChanceConvert(self.Menu.combo.rcombohc:Value()) then
-                if enemy.pos:ToScreen().onScreen then
-                    Control.CastSpell(HK_R, pred.CastPos)
-                else
-                    MMCast(pred.CastPos, HK_R)
+            if enemy.pos:ToScreen().onScreen then
+                GGCast(HK_R, enemy, R, self.Menu.combo.rcombohc:Value()+1)
+            else
+                R:GetPrediction(enemy, myHero)
+                if R:CanHit(self.Menu.combo.rcombohc:Value()+1) then
+                    CustomCastMM(HK_R, R.CastPosition)
                 end
             end
         end
@@ -1840,10 +1917,7 @@ function Jinx:WKS(enemy)
     if ValidTarget(enemy, WRange) and self:CanUse(_W, "Auto") and self:SmoothChecks() then
         local WDam = getdmg("W", enemy, myHero)
         if enemy.health < WDam then
-            local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, WSpell)
-            if pred.CastPos and pred.HitChance >= 0.25 then
-                Control.CastSpell(HK_W, pred.CastPos)
-            end
+            GGCast(HK_W, enemy, W)
         end
     end
 end
@@ -1851,10 +1925,10 @@ end
 function Jinx:EInterrupt(enemy)
     if ValidTarget(enemy, ERange) and self:CanUse(_E, "Auto") and self:SmoothChecks() then
         if GetDistance(myHero.pos, enemy.pos) <= 200 and enemy.activeSpell.valid and enemy.activeSpell.spellWasCast and enemy.activeSpell.target == myHero.handle then
-            Control.CastSpell(HK_E, myHero)
+            GGCast(HK_E, enemy, E)
         elseif enemy.pathing.isDashing then
             if GetDistance(myHero.pos, enemy.pathing.endPos) < GetDistance(myHero.pos, enemy.pos) then
-                Control.CastSpell(HK_E, enemy.pathing.endPos)
+                GGCast(HK_E, enemy, E)
             end
         end
     end
@@ -1864,12 +1938,12 @@ function Jinx:RKS(enemy)
     if ValidTarget(enemy, self.Menu.auto.rautorange:Value()) and self:CanUse(_R, "Auto") and self:SmoothChecks() and self:EnemiesAround(enemy) == 0 then
         local RDam = CalcRDmg(enemy)
         if enemy.health < RDam then
-            local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, RSpell)
-            if pred.CastPos and pred.HitChance >= 0.25 then
-                if enemy.pos:ToScreen().onScreen then
-                    Control.CastSpell(HK_R, pred.CastPos)
-                else
-                    MMCast(pred.CastPos, HK_R)
+            if enemy.pos:ToScreen().onScreen then
+                GGCast(HK_R, enemy, R)
+            else
+                R:GetPrediction(enemy, myHero)
+                if R:CanHit(HITCHANCE_HIGH) then
+                    CustomCastMM(HK_R, R.CastPosition)
                 end
             end
         end
@@ -1878,12 +1952,12 @@ end
 
 function Jinx:SemiR(enemy)
     if ValidTarget(enemy, RRange) and self.Menu.combo.rsemi:Value() and GetDistance(enemy.pos, mousePos) <= 400 and self:SmoothChecks() then
-        local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, RSpell)
-        if pred.CastPos and pred.HitChance >= 0 then
-            if enemy.pos:ToScreen().onScreen then
-                Control.CastSpell(HK_R, pred.CastPos)
-            else
-                MMCast(pred.CastPos, HK_R)
+        if enemy.pos:ToScreen().onScreen then
+            GGCast(HK_R, enemy, R)
+        else
+            R:GetPrediction(enemy, myHero)
+            if R:CanHit(HITCHANCE_HIGH) then
+                CustomCastMM(HK_R, R.CastPosition)
             end
         end
     end
