@@ -522,6 +522,17 @@ function GetTurretShot(unit)
     end
 end
 
+local function GetWDmg(unit)
+    local Wdmg = getdmg("W", unit, myHero, 1)
+    local W2dmg = getdmg("W", unit, myHero, 2)  
+    local buff = GetBuffData(unit, "kaisapassivemarker")
+    if buff and buff.count == 4 then
+        return (Wdmg+W2dmg)     
+    else        
+        return Wdmg 
+    end 
+end
+
 local function CustomCastMM(spell,pos)
     local MMSpot = Vector(pos):ToMM()
     local MouseSpotBefore = mousePos
@@ -2078,3 +2089,4 @@ end
 function OnLoad()
     Manager()
 end
+
