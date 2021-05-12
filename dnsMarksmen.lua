@@ -533,12 +533,35 @@ local function GetWDmg(unit)
     end 
 end
 
-local function CustomCastMM(spell,pos)
-    local MMSpot = Vector(pos):ToMM()
-    local MouseSpotBefore = mousePos
-    Control.SetCursorPos(MMSpot.x, MMSpot.y)
-    Control.KeyDown(spell); Control.KeyUp(spell)
-    DelayAction(function() Control.SetCursorPos(MouseSpotBefore) end, 0.20)
+local function CastSpellMM(spell,pos,range,delay)
+local castSpell = {state = 0, tick = GetTickCount(), casting = GetTickCount() - 1000, mouse = mousePos}
+local range = range or math.huge
+local delay = delay or 250
+local ticker = GetTickCount()
+    if castSpell.state == 0 and GetDistance(myHero.pos,pos) < range and ticker - castSpell.casting > delay + Game.Latency() then
+        castSpell.state = 1
+        castSpell.mouse = mousePos
+        castSpell.tick = ticker
+    end
+    if castSpell.state == 1 then
+        if ticker - castSpell.tick < Game.Latency() then
+            local castPosMM = pos:ToMM()
+            Control.SetCursorPos(castPosMM.x,castPosMM.y)
+            Control.KeyDown(spell)
+            Control.KeyUp(spell)
+            castSpell.casting = ticker + delay
+            DelayAction(function()
+                if castSpell.state == 1 then
+                    Control.SetCursorPos(castSpell.mouse)
+                    castSpell.state = 0
+                end
+            end,Game.Latency()/1000)
+        end
+        if ticker - castSpell.casting > Game.Latency() then
+            Control.SetCursorPos(castSpell.mouse)
+            castSpell.state = 0
+        end
+    end
 end
 
 local function HitChanceConvert(menVal)
@@ -572,7 +595,7 @@ function GGCast(spell, target, spellprediction, hitchance)
             return false
         end
         spellprediction:GetPrediction(target, myHero)
-        if spellprediction:CanHit(hitchance or HITCHANCE_HIGH) then
+        if spellprediction:CanHit(hitchance or HITCHANCE_HIGH) and GetDistance(spellprediction.CastPosition, myHero.pos) < spellprediction.Range and GetDistance(spellprediction.CastPosition, target.pos) < 250 then
             _G.Control.CastSpell(spell, spellprediction.CastPosition)
             return true
         end
@@ -1901,23 +1924,25 @@ end
 function Jinx:RCombo(enemy)
     if ValidTarget(enemy, self.Menu.combo.rcomborange:Value()) and self:CanUse(_R, "Combo") and GetEnemyCount(400, enemy) >= self.Menu.combo.rcombocount:Value() and self:SmoothChecks() then
         if self.Menu.combo.rcomboaa:Value() then
-            if GetDistance(enemy.pos, myHero.pos) > AARange then
-                if enemy.pos:ToScreen().onScreen then
-                    GGCast(HK_R, enemy, R, self.Menu.combo.rcombohc:Value()+1)
-                else
-                    R:GetPrediction(enemy, myHero)
-                    if R:CanHit(self.Menu.combo.rcombohc:Value()+1) then
-                        CustomCastMM(HK_R, R.CastPosition)
-                    end
+            if enemy.pos:ToScreen().onScreen then
+                GGCast(HK_R, enemy, R)
+            else
+                R:GetPrediction(enemy, myHero)
+                if R:CanHit(HITCHANCE_HIGH) and GetDisntance(R.CastPosition, myHero.pos) <= R.Range then
+                    local Direction = Vector((myHero.pos-R.CastPosition):Normalized())
+                    local CastSpot = myHero.pos - Direction * 800
+                    GGCast(HK_R, CastSpot)
                 end
             end
         else
             if enemy.pos:ToScreen().onScreen then
-                GGCast(HK_R, enemy, R, self.Menu.combo.rcombohc:Value()+1)
+                GGCast(HK_R, enemy, R)
             else
                 R:GetPrediction(enemy, myHero)
-                if R:CanHit(self.Menu.combo.rcombohc:Value()+1) then
-                    CustomCastMM(HK_R, R.CastPosition)
+                if R:CanHit(HITCHANCE_HIGH) and GetDistance(R.CastPosition, myHero.pos) <= R.Range then
+                    local Direction = Vector((myHero.pos-R.CastPosition):Normalized())
+                    local CastSpot = myHero.pos - Direction * 800
+                    GGCast(HK_R, CastSpot)
                 end
             end
         end
@@ -1953,8 +1978,10 @@ function Jinx:RKS(enemy)
                 GGCast(HK_R, enemy, R)
             else
                 R:GetPrediction(enemy, myHero)
-                if R:CanHit(HITCHANCE_HIGH) then
-                    CustomCastMM(HK_R, R.CastPosition)
+                if R:CanHit(HITCHANCE_HIGH) and GetDistance(R.CastPosition, myHero.pos) <= R.Range then
+                    local Direction = Vector((myHero.pos-R.CastPosition):Normalized())
+                    local CastSpot = myHero.pos - Direction * 800
+                    GGCast(HK_R, CastSpot)
                 end
             end
         end
@@ -1967,8 +1994,10 @@ function Jinx:SemiR(enemy)
             GGCast(HK_R, enemy, R)
         else
             R:GetPrediction(enemy, myHero)
-            if R:CanHit(HITCHANCE_HIGH) then
-                CustomCastMM(HK_R, R.CastPosition)
+            if R:CanHit(HITCHANCE_HIGH) and GetDistance(R.CastPosition, myHero.pos) <= R.Range then
+                local Direction = Vector((myHero.pos-R.CastPosition):Normalized())
+                local CastSpot = myHero.pos - Direction * 800
+                GGCast(HK_R, CastSpot)
             end
         end
     end
