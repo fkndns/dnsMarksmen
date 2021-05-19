@@ -2196,36 +2196,42 @@ local EnemyLoaded = false
 local AllyLoaded = false
 local lastSpell = GetTickCount()
 
+local SIcon = "https://static.u.gg/assets/lol/riot_static/11.10.1/img/champion/Senna.png"
+local QIcon = "https://static.u.gg/assets/lol/riot_static/11.10.1/img/spell/SennaQ.png"
+local WIcon = "https://static.u.gg/assets/lol/riot_static/11.10.1/img/spell/SennaW.png"
+local EIcon = "https://static.u.gg/assets/lol/riot_static/11.10.1/img/spell/SennaE.png"
+local RIcon = "https://static.u.gg/assets/lol/riot_static/11.10.1/img/spell/SennaR.png"
+
 function Senna:Menu()
-    self.Menu = MenuElement({type = MENU, id = "senna", name = "dnsSenna"})
+    self.Menu = MenuElement({type = MENU, id = "senna", name = "dnsSenna", leftIcon = SIcon})
 
     self.Menu:MenuElement({id = "combo", name = "Combo", type = MENU})
-    self.Menu.combo:MenuElement({id = "qcombo", name = "Use [Q] in Combo", value = true})
-    self.Menu.combo:MenuElement({id = "wcombo", name = "Use [W] in Combo", value = true})
-    self.Menu.combo:MenuElement({id = "wcombohc", name = "[W] HitChance", value = 0.1, min = 0, max = 1, step = 0.05})
-    self.Menu.combo:MenuElement({id = "ecombo", name = "Use [E] to cancle Attacks", value = true})
-    self.Menu.combo:MenuElement({id = "ecombohp", name = "[E] HP", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
+    self.Menu.combo:MenuElement({id = "qcombo", name = "Use [Q] in Combo", value = true, leftIcon = QIcon})
+    self.Menu.combo:MenuElement({id = "wcombo", name = "Use [W] in Combo", value = true, leftIcon = WIcon})
+    self.Menu.combo:MenuElement({id = "wcombohc", name = "[W] HitChance", value = 0.15, min = 0, max = 1, step = 0.05, leftIcon = WIcon})
+    self.Menu.combo:MenuElement({id = "ecombo", name = "Use [E] to cancle Attacks", value = true, leftIcon = EIcon})
+    self.Menu.combo:MenuElement({id = "ecombohp", name = "[E] HP", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = EIcon})
 
     self.Menu:MenuElement({id = "auto", name = "Auto", type = MENU})
-    self.Menu.auto:MenuElement({id = "qheal", name = "Auto [Q] low allys", value = true})
-    self.Menu.auto:MenuElement({id = "qhealhp", name = "[Q] HP <", value = 60, min = 5, max = 95, step = 5, identifier = "%"})
-    self.Menu.auto:MenuElement({id = "qhealallies", name = "[Q] Allies", type = MENU})
-    self.Menu.auto:MenuElement({id = "qks", name = "Use [Q] to KS", value = true})
-    self.Menu.auto:MenuElement({id = "qks2", name = "Use [Q] + [Ward] to KS", value = true})
-    self.Menu.auto:MenuElement({id = "wimmo", name = "Use [W] on immobile Targets", value = true})
-    self.Menu.auto:MenuElement({id = "rsave", name = "Use [R] to shield allys", value = true})
-    self.Menu.auto:MenuElement({id = "rsavehp", name = "[R] HP <", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
-    self.Menu.auto:MenuElement({id = "rsaveallies", name = "[R] Allies", type = MENU})
-    self.Menu.auto:MenuElement({id = "rks", name = "Use [R] to KS", value = true})
+    self.Menu.auto:MenuElement({id = "qheal", name = "Auto [Q] low allys", value = true, leftIcon = QIcon})
+    self.Menu.auto:MenuElement({id = "qhealhp", name = "[Q] HP <", value = 60, min = 5, max = 95, step = 5, identifier = "%", leftIcon = QIcon})
+    self.Menu.auto:MenuElement({id = "qhealallies", name = "[Q] Allies", type = MENU, leftIcon = QIcon})
+    self.Menu.auto:MenuElement({id = "qks", name = "Use [Q] to KS", value = true, leftIcon = QIcon})
+    self.Menu.auto:MenuElement({id = "qks2", name = "Use [Q] + [Ward] to KS", value = true, leftIcon = QIcon})
+    self.Menu.auto:MenuElement({id = "wimmo", name = "Use [W] on immobile Targets", value = true, leftIcon = WIcon})
+    self.Menu.auto:MenuElement({id = "rsave", name = "Use [R] to shield allys", value = true, leftIcon = RIcon})
+    self.Menu.auto:MenuElement({id = "rsavehp", name = "[R] HP <", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = RIcon})
+    self.Menu.auto:MenuElement({id = "rsaveallies", name = "[R] Allies", type = MENU, leftIcon = RIcon})
+    self.Menu.auto:MenuElement({id = "rks", name = "Use [R] to KS", value = true, leftIcon = RIcon})
 
     self.Menu:MenuElement({id = "laneclear", name = "LaneClear", type = MENU})
-    self.Menu.laneclear:MenuElement({id = "qlaneclear", name = "Use [Q] in LaneClear", value = true})
-    self.Menu.laneclear:MenuElement({id = "qlaneclearcount", name = "[Q] HitCount >=", value = 3, min = 1, max = 9, step = 1})
-    self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "[Q] Mana >=", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
+    self.Menu.laneclear:MenuElement({id = "qlaneclear", name = "Use [Q] in LaneClear", value = true, leftIcon = QIcon})
+    self.Menu.laneclear:MenuElement({id = "qlaneclearcount", name = "[Q] HitCount >=", value = 3, min = 1, max = 9, step = 1, leftIcon = QIcon})
+    self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "[Q] Mana >=", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = QIcon})
 
     self.Menu:MenuElement({id = "draws", name = "Draws", type = MENU})
-    self.Menu.draws:MenuElement({id = "qdraw", name = "Draw [Q] Range", value = false})
-    self.Menu.draws:MenuElement({id = "wdraw", name = "Draw [W] Range", value = false})
+    self.Menu.draws:MenuElement({id = "qdraw", name = "Draw [Q] Range", value = false, leftIcon = QIcon})
+    self.Menu.draws:MenuElement({id = "wdraw", name = "Draw [W] Range", value = false, leftIcon = WIcon})
 
 end
 
