@@ -59,7 +59,7 @@ do
 end 
 --]]
 
-local ItemHotKey = {[ITEM_1] = HK_ITEM_1, [ITEM_2] = HK_ITEM_2,[ITEM_3] = HK_ITEM_3, [ITEM_4] = HK_ITEM_4, [ITEM_5] = HK_ITEM_5, [ITEM_6] = HK_ITEM_6,}
+local ItemHotKey = {[ITEM_1] = HK_ITEM_1, [ITEM_2] = HK_ITEM_2, [ITEM_3] = HK_ITEM_3, [ITEM_4] = HK_ITEM_5, [ITEM_5] = HK_ITEM_6, [ITEM_6] = HK_ITEM_7, [ITEM_7] = HK_ITEM_7,}
 
 local function GetInventorySlotItem(itemID)
     assert(type(itemID) == "number", "GetInventorySlotItem: wrong argument types (<number> expected)")
@@ -489,6 +489,20 @@ local function GetMinionCount(checkrange, range, pos)
     return count
 end
 
+local function GetMinionCountLinear(checkrange, range, pos)
+    local minions = _G.SDK.ObjectManager:GetEnemyMinions(checkrange)
+    local count = 0 
+    for i = 1, #minions do
+        local minion = minions[i]
+        local spellLine = ClosestPointOnLineSegment(minion.pos, myHero.pos, pos)
+        if GetDistance(minion.pos, spellLine) <= range and ValidTarget(minion) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+
 local function dnsTargetSelector(unit, range)
     local fullDamUnit = (unit.totalDamage + unit.ap * 0.7)
     local healthPercentUnit = (unit.health / unit.maxHealth)
@@ -602,6 +616,58 @@ function GGCast(spell, target, spellprediction, hitchance)
         return false
     end
 
+function dnsCast(spell, pos, prediction, hitchance)
+    local hitchance = hitchance or 0.1
+    if pos == nil and prediction == nil then
+        Control.KeyDown(spell)
+        Control.KeyUp(spell)
+        lastSpell = GetTickCount()
+    elseif prediction == nil then
+        if pos.pos:ToScreen().onScreen then
+            _G.Control.CastSpell(spell, pos)
+            lastSpell = GetTickCount()
+        else
+            CastSpellMM(spell, pos)
+            lastSpell = GetTickCount()
+        end
+    else
+        if prediction.type == "circular" then
+            local pred = _G.PremiumPrediction:GetPrediction(myHero, pos, prediction)
+            if pred.CastPos and pred.HitChance >= hitchance and GetDistance(pred.CastPos, myHero.pos) <= prediction.range then
+                if pred.CastPos:ToScreen().onScreen then
+                    _G.Control.CastSpell(spell, pred.CastPos)
+                    lastSpell = GetTickCount()
+                else
+                    CastSpellMM(spell, pred.CastPos)
+                    lastSpell = GetTickCount()
+                end
+            end
+        elseif prediction.type == "linear" then
+            local pred = _G.PremiumPrediction:GetPrediction(myHero, pos, prediction)
+            if pred.CastPos and pred.HitChance >= hitchance and GetDistance(pred.CastPos, myHero.pos) <= prediction.range then
+                if pred.CastPos:ToScreen().onScreen then
+                    _G.Control.CastSpell(spell, pred.CastPos)
+                    lastSpell = GetTickCount()
+                else
+                    local CastSpot = myHero.pos:Extended(pred.CastPos, 800)
+                    _G.Control.CastSpell(spell, CastSpot)
+                    lastSpell = GetTickCount()
+                end
+            end
+        elseif prediction.type == "conic" then
+            local pred = _G.PremiumPrediction:GetPrediction(myHero, pos, prediction)
+            if pred.CastPos and pred.HitChance >= hitchance and GetDistance(pred.CastPos, myHero.pos) <= prediction.range then
+                if pred.CastPos:ToScreen().onScreen then
+                    _G.Control.CastSpell(spell, pred.CastPos)
+                    lastSpell = GetTickCount()
+                else
+                    return
+                end
+            end
+        end
+    end
+end
+
 class "Manager"
 
 function Manager:__init()
@@ -616,6 +682,9 @@ function Manager:__init()
 	end
     if myHero.charName == "Jinx" then
         DelayAction(function() self:LoadJinx() end, 1.05)
+    end
+    if myHero.charName == "Senna" then
+        DelayAction(function() self:LoadSenna() end, 1.05)
     end
 end
 
@@ -665,6 +734,13 @@ function Manager:LoadJinx()
     Jinx:Menu()
     Callback.Add("Tick", function() Jinx:Tick() end)
     Callback.Add("Draw", function() Jinx:Draws() end)
+end
+
+function Manager:LoadSenna()
+    Senna:Spells()
+    Senna:Menu()
+    Callback.Add("Tick", function() Senna:Tick() end)
+    Callback.Add("Draw", function() Senna:Draws() end)
 end
 
 class "Kaisa"
@@ -2114,8 +2190,378 @@ function Jinx:MoveHelper(unit)
     return GaleMouseSpoty
 end
 
+class "Senna"
+
+local EnemyLoaded = false
+local AllyLoaded = false
+local lastSpell = GetTickCount()
+
+function Senna:Menu()
+    self.Menu = MenuElement({type = MENU, id = "senna", name = "dnsSenna"})
+
+    self.Menu:MenuElement({id = "combo", name = "Combo", type = MENU})
+    self.Menu.combo:MenuElement({id = "qcombo", name = "Use [Q] in Combo", value = true})
+    self.Menu.combo:MenuElement({id = "wcombo", name = "Use [W] in Combo", value = true})
+    self.Menu.combo:MenuElement({id = "wcombohc", name = "[W] HitChance", value = 0.1, min = 0, max = 1, step = 0.05})
+    self.Menu.combo:MenuElement({id = "ecombo", name = "Use [E] to cancle Attacks", value = true})
+    self.Menu.combo:MenuElement({id = "ecombohp", name = "[E] HP", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
+
+    self.Menu:MenuElement({id = "auto", name = "Auto", type = MENU})
+    self.Menu.auto:MenuElement({id = "qheal", name = "Auto [Q] low allys", value = true})
+    self.Menu.auto:MenuElement({id = "qhealhp", name = "[Q] HP <", value = 60, min = 5, max = 95, step = 5, identifier = "%"})
+    self.Menu.auto:MenuElement({id = "qhealallies", name = "[Q] Allies", type = MENU})
+    self.Menu.auto:MenuElement({id = "qks", name = "Use [Q] to KS", value = true})
+    self.Menu.auto:MenuElement({id = "qks2", name = "Use [Q] + [Ward] to KS", value = true})
+    self.Menu.auto:MenuElement({id = "wimmo", name = "Use [W] on immobile Targets", value = true})
+    self.Menu.auto:MenuElement({id = "rsave", name = "Use [R] to shield allys", value = true})
+    self.Menu.auto:MenuElement({id = "rsavehp", name = "[R] HP <", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
+    self.Menu.auto:MenuElement({id = "rsaveallies", name = "[R] Allies", type = MENU})
+    self.Menu.auto:MenuElement({id = "rks", name = "Use [R] to KS", value = true})
+
+    self.Menu:MenuElement({id = "laneclear", name = "LaneClear", type = MENU})
+    self.Menu.laneclear:MenuElement({id = "qlaneclear", name = "Use [Q] in LaneClear", value = true})
+    self.Menu.laneclear:MenuElement({id = "qlaneclearcount", name = "[Q] HitCount >=", value = 3, min = 1, max = 9, step = 1})
+    self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "[Q] Mana >=", value = 40, min = 5, max = 95, step = 5, identifier = "%"})
+
+    self.Menu:MenuElement({id = "draws", name = "Draws", type = MENU})
+    self.Menu.draws:MenuElement({id = "qdraw", name = "Draw [Q] Range", value = false})
+    self.Menu.draws:MenuElement({id = "wdraw", name = "Draw [W] Range", value = false})
+
+end
+
+function Senna:ActiveMenu()
+    for i, ally in pairs(AllyHeroes) do
+        self.Menu.auto.qhealallies:MenuElement({id = ally.charName, name = ally.charName, value = true})
+        self.Menu.auto.rsaveallies:MenuElement({id = ally.charName, name = ally.charName, value = true})
+    end
+end
+
+function Senna:Spells()
+    Q = {range =  myHero.range + myHero.boundingRadius, radius = 100}
+    Q2 = {range = 1300, radius = 75, delay = 0.33, speed = math.huge, collision = {}, type = "linear"}
+    W = {range = 1200, radius = 50, delay = 0.25, speed = 1200, collision = {"minion"}, type = "linear"}
+    R = {range = 20000, radius = 30, delay = 1, speed = 20000, collision = {}, type = "circular"}
+end
+
+function Senna:Draws()
+    if self.Menu.draws.qdraw:Value() then
+        Draw.Circle(myHero, Q.range, 2, Draw.Color(255, 255, 255, 0))
+    end
+    if self.Menu.draws.wdraw:Value() then
+        Draw.Circle(myHero, W.range, 2, Draw.Color(255, 0, 255, 0))
+    end
+end
+
+function Senna:Tick()
+    if _G.JustEvade and _G.JustEvade:Evading() or (_G.ExtLibEvade and _G.ExtLibEvade.Evading) or Game.IsChatOpen() or myHero.dead then return end
+    target = GetTarget(myHero.range + myHero.boundingRadius + myHero.boundingRadius)
+    Q.range = myHero.range + myHero.boundingRadius
+    CastingQ = myHero.activeSpell.name == "SennaQ"
+    CastingW = myHero.activeSpell.name == "SennaW"
+    CastingE = myHero.activeSpell.name == "SennaE"
+    CastingR = myHero.activeSpell.name == "SennaR"
+    if EnemyLoaded == false then
+        local CountEnemy = 0
+        for i, enemy in pairs(EnemyHeroes) do
+            CountEnemy = CountEnemy + 1
+        end
+        if CountEnemy < 1 then
+            GetEnemyHeroes()
+        else
+            EnemyLoaded = true
+            PrintChat("Enemy Loaded")
+        end
+    end
+    if AllyLoaded == false then
+        local CountAlly = 0
+        for i, ally in pairs(AllyHeroes) do
+            CountAlly = CountAlly + 1
+        end
+        if CountAlly < 1 then
+            GetAllyHeroes()
+        else
+            AllyLoaded = true
+            PrintChat("Ally Loaded")
+            self:ActiveMenu()
+        end
+    end
+    self:Auto()
+    self:Logic()
+    self:Minions()
+end
+
+function Senna:CastingChecks()
+    if not CastingQ and not CastingW and not CastingE and not CastingR and _G.SDK.Spell:CanTakeAction({q = 0.55, w = 0.4, e = 1.15, r = 1.15}) and _G.SDK.Cursor.Step == 0 and not _G.SDK.Orbwalker:IsAutoAttacking() then
+        return true
+    else
+        return false
+    end
+end
+
+function Senna:CanUse(spell, mode)
+    if mode == nil then
+        mode = Mode()
+    end
+
+    if spell == _Q then
+        if mode == "Combo" and IsReady(_Q) and self.Menu.combo.qcombo:Value() then
+            return true
+        end
+        if mode == "Heal" and IsReady(_Q) and self.Menu.auto.qheal:Value() then
+            return true
+        end
+        if mode == "KS" and IsReady(_Q) and self.Menu.auto.qks:Value() then
+            return true
+        end
+        if mode == "Ward" and IsReady(_Q) and self.Menu.auto.qks2:Value() then
+            return true
+        end
+        if mode == "LaneClear" and IsReady(spell) and self.Menu.laneclear.qlaneclear:Value() and myHero.mana / myHero.maxMana >= self.Menu.laneclear.qlaneclearmana:Value() / 100 then
+            return true
+        end
+    end
+    if spell == _W then
+        if mode == "Combo" and IsReady(_W) and self.Menu.combo.wcombo:Value() then
+            return true
+        end
+        if mode == "Immo" and IsReady(_W) and self.Menu.auto.wimmo:Value() then
+            return true
+        end
+    end
+    if spell == _E then
+        if mode == "Combo" and IsReady(_E) and self.Menu.combo.ecombo:Value() then
+            return true
+        end
+    end
+    if spell == _R then
+        if mode == "Save" and IsReady(_R) and self.Menu.auto.rsave:Value() then
+            return true
+        end
+        if mode == "KS" and IsReady(_R) and self.Menu.auto.rks:Value() then
+            return true
+        end
+    end
+    return false
+end
+
+function Senna:Auto()
+    for i, enemy in pairs(EnemyHeroes) do
+        self:QKS(enemy)
+        self:QKS1(enemy)
+        self:QKS2(enemy)
+        self:WImmo(enemy)
+        self:RKS(enemy)
+        if Mode() == "Combo" then
+            self:ECombo(enemy)
+        end
+        for j, ally in pairs(AllyHeroes) do
+            self:AutoHeal(enemy, ally)
+            self:RSave(enemy, ally)
+        end
+    end
+end
+
+function Senna:Logic()
+    if Mode() == "Combo" then
+        self:QCombo()
+        self:WCombo()
+    end
+end
+
+function Senna:Minions()
+    local minions = _G.SDK.ObjectManager:GetEnemyMinions(1400)
+    for i = 1, #minions do
+        local minion = minions[i]
+        if Mode() == "LaneClear" then
+            self:QLaneClear(minion)
+        end
+    end
+end
+
+-- functions -- 
+
+function Senna:QCombo()
+    local qtarget = GetTarget(Q.range)
+    if ValidTarget(qtarget) and self:CanUse(_Q, "Combo") and self:CastingChecks() then
+        _G.Control.CastSpell(HK_Q, qtarget)
+    end
+end
+
+function Senna:WCombo()
+    local wtarget = GetTarget(W.range)
+    if ValidTarget(wtarget) and self:CanUse(_W, "Combo") and self:CastingChecks() then
+        dnsCast(HK_W, wtarget, W, self.Menu.combo.wcombohc:Value())
+    end
+end
+
+function Senna:ECombo(enemy)
+    if ValidTarget(enemy) and self:CanUse(_E, "Combo") and self:CastingChecks() and enemy.activeSpell.valid and not enemy.activeSpell.isStopped and myHero.health / myHero. maxHealth <= self.Menu.combo.ecombohp:Value() / 100 then
+        if enemy.activeSpell.target == myHero.handle then
+            dnsCast(HK_E)
+        end
+    end
+end
+
+function Senna:AutoHeal(enemy, ally)
+    if ValidTarget(ally, Q.range) and self:CanUse(_W, "Heal") and self:CastingChecks() and ally.health / ally.maxHealth <= self.Menu.auto.qhealhp:Value() / 100 and ValidTarget(enemy) and GetDistance(enemy.pos, ally.pos) <= 1000 and self.Menu.auto.qhealallies[ally.charName]:Value() then
+        dnsCast(HK_Q, ally)
+    end
+end
+
+function Senna:QKS(enemy)
+    if ValidTarget(enemy, Q.range) and self:CanUse(_Q, "KS") and self:CastingChecks() then
+        local qdam = getdmg("Q", enemy, myHero, myHero:GetSpellData(_Q).level)
+        if qdam >= enemy.health then
+            dnsCast(HK_Q, enemy)
+        end
+    end
+end
+
+function Senna:QKS1(enemy)
+    if ValidTarget(enemy, Q2.range) and GetDistance(myHero.pos, enemy.pos) > Q.range and self:CanUse(_Q, "KS") and self:CastingChecks() then
+        local qdam = getdmg("Q", enemy, myHero, myHero:GetSpellData(_Q).level)
+        if qdam > enemy.health then
+            local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, Q2)
+            if pred.CastPos and pred.HitChance >= 0 then
+                local minions = _G.SDK.ObjectManager:GetMinions(Q.range)
+                for i = 1, #minions do
+                    local minion = minions[i]
+                    if ValidTarget(minion) then
+                        local targetPos = myHero.pos:Extended(pred.CastPos, Q2.range)
+                        local minionPos = myHero.pos:Extended(minion.pos, Q2.range)
+                        if GetDistance(targetPos, minionPos) <= Q2.radius then
+                            _G.Control.CastSpell(HK_Q, minion)
+                        end
+                    end
+                end
+                local heroes = _G.SDK.ObjectManager:GetHeroes(Q.range)
+                for j = 1, #heroes do
+                    local hero = heroes[i]
+                    if ValidTarget(hero) then
+                        local targetPos = myHero.pos:Extended(pred.CastPos, Q2.range)
+                        local heroPos = myHero.pos:Extended(hero.pos, Q2.range)
+                        if GetDistance(targetPos, heroPos) <= Q2.radius then
+                            _G.Control.CastSpell(HK_Q, hero)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+function Senna:GetWardStone()
+    if GetItemSlot(myHero, 3863) > 0 then
+        return GetItemSlot(myHero, 3863)
+    elseif GetItemSlot(myHero, 3864) > 0 then
+        return GetItemSlot(myHero, 3864)
+    elseif GetItemSlot(myHero, 3855) > 0 then
+        return GetItemSlot(myHero, 3855)
+    elseif GetItemSlot(myHero, 3856) > 0 then
+        return GetItemSlot(myHero, 3856)
+    else
+        return 0
+    end
+end
+
+function Senna:QKS2(enemy)
+    local YellowTrinket = GetItemSlot(myHero, 3340)
+    local WardStone = self:GetWardStone()
+    local PinkWard = GetItemSlot(myHero, 2055)
+    local WardStoneAmmo = myHero:GetItemData(WardStone).ammo
+    if ValidTarget(enemy, Q2.range) and GetDistance(myHero.pos, enemy.pos) > Q.range and self:CanUse(_Q, "Ward") and self:CastingChecks() then
+        local qdam = getdmg("Q", enemy, myHero, myHero:GetSpellData(_Q).level)
+        if qdam >= enemy.health then
+            local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, Q2)
+            if pred.CastPos and pred.HitChance >= 0 then
+                local wardPos = myHero.pos:Extended(pred.CastPos, 500)
+                if WardStone > 0 and WardStoneAmmo > 0 then
+                    Control.CastSpell(ItemHotKey[WardStone], wardPos)
+                    DelayAction(function() Control.CastSpell(HK_Q, wardPos) end, 0.15)
+                elseif YellowTrinket > 0 and IsReady(YellowTrinket) then
+                    Control.CastSpell(ItemHotKey[YellowTrinket], wardPos)
+                    DelayAction(function() Control.CastSpell(HK_Q, wardPos) end, 0.15)
+                elseif PinkWard > 0 then
+                    Control.CastSpell(ItemHotKey[PinkWard], wardPos)
+                    DelayAction(function() Control.CastSpell(HK_Q, wardPos) end, 0.15)
+                end
+            end
+        end
+    end
+end
+
+function Senna:WImmo(enemy)
+    if ValidTarget(enemy, W.range) and self:CanUse(_W, "Immo") and self:CastingChecks() then 
+        if IsImmobile(enemy) >= 0.5 then
+            dnsCast(HK_W, enemy, W, 1)
+        elseif enemy.pathing and enemy.pathing.isDashing then
+            if GetDistance(enemy.pos, myHero.pos) > GetDistance(enemy.pathing.endPos, myHero.pos) then
+                dnsCast(HK_W, enemy, W, 1)
+            end
+        end
+    end
+end
+
+function Senna:RSave(enemy, ally)
+    if ValidTarget(ally, R.range) and self:CanUse(_R, "Save") and self:CastingChecks() and enemy.activeSpell.valid and not enemy.activeSpell.isStopped and ally.health / ally.maxHealth <= self.Menu.auto.rsavehp:Value() / 100 and self.Menu.auto.rsaveallies[ally.charName]:Value() then 
+        if enemy.activeSpell.target == ally.handle then
+            dnsCast(HK_R, ally, R, 0)
+        else
+            local placementPos = enemy.activeSpell.placementPos
+            local startPos = enemy.activeSpell.startPos
+            local width = ally.boundingRadius + 50
+            if enemy.activeSpell.width > 0 then width = width + enemy.activeSpell.width end
+            local spellLine = ClosestPointOnLineSegment(ally.pos, startPos, placementPos)
+            if GetDistance(ally.pos, spellLine) <= width then
+                dnsCast(HK_R, ally, R, 0)
+            end
+        end
+    end
+end
+
+function Senna:RKS(enemy)
+    if ValidTarget(enemy, R.range) and self:CanUse(_R, "KS") and self:CastingChecks() then
+        local rdam = getdmg("R", enemy, myHero, myHero:GetSpellData(_R).level)
+        if rdam >= enemy.health then
+            dnsCast(HK_R, enemy, R, 0)
+        end
+    end
+end
+
+function Senna:QLaneClear(minion)
+    if ValidTarget(minion, Q.range) and self:CanUse(_Q, "LaneClear") and self:CastingChecks() then
+        local minionPos = myHero.pos:Extended(minion.pos, 1300)
+        if GetMinionCountLinear(1400, Q2.radius, minionPos) >= self.Menu.laneclear.qlaneclearcount:Value() then
+            dnsCast(HK_Q, minion)
+        end
+    end
+end
 
 function OnLoad()
     Manager()
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
