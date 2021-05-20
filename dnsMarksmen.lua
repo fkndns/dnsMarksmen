@@ -621,14 +621,11 @@ function dnsCast(spell, pos, prediction, hitchance)
     if pos == nil and prediction == nil then
         Control.KeyDown(spell)
         Control.KeyUp(spell)
-        lastSpell = GetTickCount()
     elseif prediction == nil then
         if pos.pos:ToScreen().onScreen then
             _G.Control.CastSpell(spell, pos)
-            lastSpell = GetTickCount()
         else
             CastSpellMM(spell, pos)
-            lastSpell = GetTickCount()
         end
     else
         if prediction.type == "circular" then
@@ -636,10 +633,8 @@ function dnsCast(spell, pos, prediction, hitchance)
             if pred.CastPos and pred.HitChance >= hitchance and GetDistance(pred.CastPos, myHero.pos) <= prediction.range then
                 if pred.CastPos:ToScreen().onScreen then
                     _G.Control.CastSpell(spell, pred.CastPos)
-                    lastSpell = GetTickCount()
                 else
                     CastSpellMM(spell, pred.CastPos)
-                    lastSpell = GetTickCount()
                 end
             end
         elseif prediction.type == "linear" then
@@ -647,11 +642,9 @@ function dnsCast(spell, pos, prediction, hitchance)
             if pred.CastPos and pred.HitChance >= hitchance and GetDistance(pred.CastPos, myHero.pos) <= prediction.range then
                 if pred.CastPos:ToScreen().onScreen then
                     _G.Control.CastSpell(spell, pred.CastPos)
-                    lastSpell = GetTickCount()
                 else
                     local CastSpot = myHero.pos:Extended(pred.CastPos, 800)
                     _G.Control.CastSpell(spell, CastSpot)
-                    lastSpell = GetTickCount()
                 end
             end
         elseif prediction.type == "conic" then
@@ -659,7 +652,6 @@ function dnsCast(spell, pos, prediction, hitchance)
             if pred.CastPos and pred.HitChance >= hitchance and GetDistance(pred.CastPos, myHero.pos) <= prediction.range then
                 if pred.CastPos:ToScreen().onScreen then
                     _G.Control.CastSpell(spell, pred.CastPos)
-                    lastSpell = GetTickCount()
                 else
                     return
                 end
@@ -2229,6 +2221,9 @@ function Senna:Menu()
     self.Menu.laneclear:MenuElement({id = "qlaneclearcount", name = "[Q] HitCount >=", value = 3, min = 1, max = 9, step = 1, leftIcon = QIcon})
     self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "[Q] Mana >=", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = QIcon})
 
+    self.Menu:MenuElement({id = "misc", name = "Misc", type = MENU})
+    self.Menu.misc:MenuElement({id = "movementhelper", name = "RangedHelper", value = true})
+
     self.Menu:MenuElement({id = "draws", name = "Draws", type = MENU})
     self.Menu.draws:MenuElement({id = "qdraw", name = "Draw [Q] Range", value = false, leftIcon = QIcon})
     self.Menu.draws:MenuElement({id = "wdraw", name = "Draw [W] Range", value = false, leftIcon = WIcon})
@@ -2260,8 +2255,15 @@ end
 
 function Senna:Tick()
     if _G.JustEvade and _G.JustEvade:Evading() or (_G.ExtLibEvade and _G.ExtLibEvade.Evading) or Game.IsChatOpen() or myHero.dead then return end
-    target = GetTarget(myHero.range + myHero.boundingRadius + myHero.boundingRadius)
-    Q.range = myHero.range + myHero.boundingRadius
+    target = GetTarget(myHero.range + myHero.boundingRadius)
+
+    if target and ValidTarget(target) then
+        GaleMouseSpot = self:MoveHelper()
+    else
+        _G.SDK.Orbwalker.ForceMovement = nil
+    end
+    
+    Q.range = myHero.range + myHero.boundingRadius + myHero.boundingRadius
     CastingQ = myHero.activeSpell.name == "SennaQ"
     CastingW = myHero.activeSpell.name == "SennaW"
     CastingE = myHero.activeSpell.name == "SennaE"
@@ -2476,6 +2478,7 @@ function Senna:QKS2(enemy)
     local PinkWard = GetItemSlot(myHero, 2055)
     local WardStoneAmmo = myHero:GetItemData(WardStone).ammo
     if ValidTarget(enemy, Q2.range) and GetDistance(myHero.pos, enemy.pos) > Q.range and self:CanUse(_Q, "Ward") and self:CastingChecks() then
+        PrintChat(myHero:GetItemData(YellowTrinket).stacks)
         local qdam = getdmg("Q", enemy, myHero, myHero:GetSpellData(_Q).level)
         if qdam >= enemy.health then
             local pred = _G.PremiumPrediction:GetPrediction(myHero, enemy, Q2)
@@ -2484,7 +2487,7 @@ function Senna:QKS2(enemy)
                 if WardStone > 0 and WardStoneAmmo > 0 then
                     Control.CastSpell(ItemHotKey[WardStone], wardPos)
                     DelayAction(function() Control.CastSpell(HK_Q, wardPos) end, 0.15)
-                elseif YellowTrinket > 0 and IsReady(YellowTrinket) then
+                elseif YellowTrinket > 0 and myHero:GetSpellData(YellowTrinket).currentCd == 0 then
                     Control.CastSpell(ItemHotKey[YellowTrinket], wardPos)
                     DelayAction(function() Control.CastSpell(HK_Q, wardPos) end, 0.15)
                 elseif PinkWard > 0 then
@@ -2543,31 +2546,51 @@ function Senna:QLaneClear(minion)
     end
 end
 
+function Senna:MoveHelper(unit)
+    local EAARangel = unit.range + unit.boundingRadius
+    local AARange = myHero.range + myHero.boundingRadius
+    local MoveSpot = nil
+    local RangeDif = AARange - EAARangel
+    local ExtraRangeDist = RangeDif
+    local ExtraRangeChaseDist = RangeDif - 100
+
+    local ScanDirection = Vector((myHero.pos-mousePos):Normalized())
+    local ScanDistance = GetDistance(myHero.pos, unit.pos) * 0.8
+    local ScanSpot = myHero.pos - ScanDirection * ScanDistance
+    
+
+    local MouseDirection = Vector((unit.pos-ScanSpot):Normalized())
+    local MouseSpotDistance = EAARangel + ExtraRangeDist
+    if not IsFacing(unit) then
+        MouseSpotDistance = EAARangel + ExtraRangeChaseDist
+    end
+    if MouseSpotDistance > AARange then
+        MouseSpotDistance = AARange
+    end
+
+    local MouseSpot = unit.pos - MouseDirection * (MouseSpotDistance)
+    local MouseDistance = GetDistance(unit.pos, mousePos)
+    local GaleMouseSpotDirection = Vector((myHero.pos-MouseSpot):Normalized())
+    local GalemouseSpotDistance = GetDistance(myHero.pos, MouseSpot)
+    if GalemouseSpotDistance > 300 then
+        GalemouseSpotDistance = 300
+    end
+    local GaleMouseSpoty = myHero.pos - GaleMouseSpotDirection * GalemouseSpotDistance
+    MoveSpot = MouseSpot
+
+    if MoveSpot then
+        if GetDistance(myHero.pos, MoveSpot) < 50 or IsUnderEnemyTurret(MoveSpot) then
+            _G.SDK.Orbwalker.ForceMovement = nil
+        elseif self.Menu.misc.movementhelper:Value() and GetDistance(myHero.pos, unit.pos) <= AARange-50 and (Mode() == "Combo" or Mode() == "Harass") and self:CastingChecks() and MouseDistance < 750 then
+            _G.SDK.Orbwalker.ForceMovement = MoveSpot
+        else
+            _G.SDK.Orbwalker.ForceMovement = nil
+        end
+    end
+    return GaleMouseSpoty
+end
+
 function OnLoad()
     Manager()
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
