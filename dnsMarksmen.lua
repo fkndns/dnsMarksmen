@@ -2200,7 +2200,6 @@ function Senna:Menu()
     self.Menu:MenuElement({id = "combo", name = "Combo", type = MENU})
     self.Menu.combo:MenuElement({id = "qcombo", name = "Use [Q] in Combo", value = true, leftIcon = QIcon})
     self.Menu.combo:MenuElement({id = "wcombo", name = "Use [W] in Combo", value = true, leftIcon = WIcon})
-    self.Menu.combo:MenuElement({id = "wcombohc", name = "[W] HitChance", value = 0.15, min = 0, max = 1, step = 0.05, leftIcon = WIcon})
     self.Menu.combo:MenuElement({id = "ecombo", name = "Use [E] to cancle Attacks", value = true, leftIcon = EIcon})
     self.Menu.combo:MenuElement({id = "ecombohp", name = "[E] HP", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = EIcon})
 
@@ -2222,7 +2221,7 @@ function Senna:Menu()
     self.Menu.laneclear:MenuElement({id = "qlaneclearmana", name = "[Q] Mana >=", value = 40, min = 5, max = 95, step = 5, identifier = "%", leftIcon = QIcon})
 
     self.Menu:MenuElement({id = "misc", name = "Misc", type = MENU})
-    self.Menu.misc:MenuElement({id = "movementhelper", name = "RangedHelper", value = true})
+    self.Menu.misc:MenuElement({id = "movementhelper", name = "RangeHelper", value = true})
 
     self.Menu:MenuElement({id = "draws", name = "Draws", type = MENU})
     self.Menu.draws:MenuElement({id = "qdraw", name = "Draw [Q] Range", value = false, leftIcon = QIcon})
@@ -2258,11 +2257,11 @@ function Senna:Tick()
     target = GetTarget(myHero.range + myHero.boundingRadius)
 
     if target and ValidTarget(target) then
-        GaleMouseSpot = self:MoveHelper()
+        GaleMouseSpot = self:MoveHelper(target)
     else
         _G.SDK.Orbwalker.ForceMovement = nil
     end
-    
+
     Q.range = myHero.range + myHero.boundingRadius + myHero.boundingRadius
     CastingQ = myHero.activeSpell.name == "SennaQ"
     CastingW = myHero.activeSpell.name == "SennaW"
@@ -2398,7 +2397,7 @@ end
 function Senna:WCombo()
     local wtarget = GetTarget(W.range)
     if ValidTarget(wtarget) and self:CanUse(_W, "Combo") and self:CastingChecks() then
-        dnsCast(HK_W, wtarget, W, self.Menu.combo.wcombohc:Value())
+        dnsCast(HK_W, wtarget, W, 0.05)
     end
 end
 
@@ -2514,7 +2513,7 @@ end
 function Senna:RSave(enemy, ally)
     if ValidTarget(ally, R.range) and self:CanUse(_R, "Save") and self:CastingChecks() and enemy.activeSpell.valid and not enemy.activeSpell.isStopped and ally.health / ally.maxHealth <= self.Menu.auto.rsavehp:Value() / 100 and self.Menu.auto.rsaveallies[ally.charName]:Value() then 
         if enemy.activeSpell.target == ally.handle then
-            dnsCast(HK_R, ally, R, 0)
+            dnsCast(HK_R, ally, R, 0.05)
         else
             local placementPos = enemy.activeSpell.placementPos
             local startPos = enemy.activeSpell.startPos
@@ -2522,7 +2521,7 @@ function Senna:RSave(enemy, ally)
             if enemy.activeSpell.width > 0 then width = width + enemy.activeSpell.width end
             local spellLine = ClosestPointOnLineSegment(ally.pos, startPos, placementPos)
             if GetDistance(ally.pos, spellLine) <= width then
-                dnsCast(HK_R, ally, R, 0)
+                dnsCast(HK_R, ally, R, 0.05)
             end
         end
     end
@@ -2532,7 +2531,7 @@ function Senna:RKS(enemy)
     if ValidTarget(enemy, R.range) and self:CanUse(_R, "KS") and self:CastingChecks() then
         local rdam = getdmg("R", enemy, myHero, myHero:GetSpellData(_R).level)
         if rdam >= enemy.health then
-            dnsCast(HK_R, enemy, R, 0)
+            dnsCast(HK_R, enemy, R, 0.05)
         end
     end
 end
@@ -2593,4 +2592,28 @@ end
 function OnLoad()
     Manager()
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
